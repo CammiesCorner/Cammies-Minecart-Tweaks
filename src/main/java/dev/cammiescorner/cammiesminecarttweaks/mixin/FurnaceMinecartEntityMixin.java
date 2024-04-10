@@ -1,8 +1,8 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
-import dev.cammiescorner.cammiesminecarttweaks.integration.MinecartTweaksConfig;
+import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
-import dev.cammiescorner.cammiesminecarttweaks.utils.MinecartHelper;
+import dev.cammiescorner.cammiesminecarttweaks.common.utils.MinecartHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.PoweredRailBlock;
@@ -62,12 +62,12 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 		prevChunkPos = getChunkPos();
 	}
 
-	@Inject(method = "getMaxSpeed", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "getMaxOffRailSpeed", at = @At("RETURN"), cancellable = true)
 	public void minecarttweaks$increaseSpeed(CallbackInfoReturnable<Double> info) {
 		if(isLit())
 			info.setReturnValue(MinecartTweaksConfig.getFurnaceMinecartSpeed());
 		else
-			info.setReturnValue(super.getMaxSpeed());
+			info.setReturnValue(super.getMaxOffRailSpeed());
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))
@@ -107,10 +107,10 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 		train.add(this);
 
 		if(getLinkedChild() != null) {
-			Linkable linkable = getLinkedChild();
+			Linkable linkable = (Linkable) getLinkedChild();
 			train.add(getLinkedChild());
 
-			while((linkable = linkable.getLinkedChild()) instanceof Linkable && !train.contains(linkable)) {
+			while((linkable = (Linkable) linkable.getLinkedChild()) instanceof Linkable && !train.contains(linkable)) {
 				train.add(linkable.getLinkedChild());
 			}
 
@@ -178,7 +178,7 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 	}
 
 	@ModifyArg(method = "tick", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/util/math/random/Random;nextInt(I)I"
+			target = "Lnet/minecraft/util/random/RandomGenerator;nextInt(I)I"
 	))
 	public int minecarttweaks$removeRandom(int i) {
 		return 1;

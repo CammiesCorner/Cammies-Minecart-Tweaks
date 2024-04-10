@@ -1,4 +1,4 @@
-package dev.cammiescorner.cammiesminecarttweaks.integration;
+package dev.cammiescorner.cammiesminecarttweaks.common.compat;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;

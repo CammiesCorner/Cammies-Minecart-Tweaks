@@ -1,0 +1,61 @@
+{
+	"schema_version": 1,
+	"quilt_loader": {
+		"group": "dev.cammiescorner",
+		"id": "minecarttweaks",
+		"version": "${version}",
+		"metadata": {
+			"name": "Cammie's Minecart Tweaks",
+			"description": "Makes Minecarts more viable as a form of transportation",
+			"contributors": {
+				"Cammie": "Owner",
+				"Up": "Author"
+			},
+			"contact": {
+				"homepage": "https://cammiescorner.dev",
+				"issues": "https://github.com/CammiePone/Cammies-Minecart-Tweaks/issues",
+				"sources": "https://github.com/CammiePone/Cammies-Minecart-Tweaks"
+			},
+			"license": {
+				"name": "Custom License",
+				"id": "Custom License",
+				"url": "https://github.com/CammiePone/Cammies-Minecart-Tweaks/blob/HEAD/LICENSE.md",
+				"description": "This license permits small portions of the code to be used without prior permission, but not large parts."
+			},
+			"icon": "assets/minecarttweaks/icon.png"
+		},
+		"intermediate_mappings": "net.fabricmc:intermediary",
+		"entrypoints": {
+			"init": "dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks",
+			"client_init": "dev.cammiescorner.cammiesminecarttweaks.client.MinecartTweaksClient",
+			"modmenu": "dev.cammiescorner.cammiesminecarttweaks.common.compat.ModMenuCompat"
+		},
+		"depends": [
+			{
+				"id": "quilt_loader",
+				"versions": ">=0.18.1-"
+			},
+			{
+				"id": "quilted_fabric_api",
+				"versions": ">=5.0.0-",
+				"mc-publish": {
+					"curseforge": "634179",
+					"modrinth": "qvIfYCYJ"
+				}
+			},
+			{
+				"id": "minecraft",
+				"versions": "=1.20.1"
+			},
+			{
+				"id": "midnightlib",
+				"mc-publish": {
+					"curseforge": "488090",
+					"modrinth": "codAaoxh"
+				}
+			}
+		]
+	},
+	"access_widener": "minecart-tweaks.accesswidener",
+	"mixin": "minecart-tweaks.mixins.json"
+}

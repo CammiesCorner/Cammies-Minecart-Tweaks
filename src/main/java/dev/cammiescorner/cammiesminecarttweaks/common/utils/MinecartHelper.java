@@ -1,4 +1,4 @@
-package dev.cammiescorner.cammiesminecarttweaks.utils;
+package dev.cammiescorner.cammiesminecarttweaks.common.utils;
 
 import com.mojang.datafixers.util.Pair;
 import dev.cammiescorner.cammiesminecarttweaks.common.blocks.CrossedRailBlock;

@@ -1,9 +1,10 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin.client;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
+import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
@@ -11,8 +12,8 @@ import net.minecraft.client.render.entity.MinecartEntityRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.Axis;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,7 +31,7 @@ public abstract class MinecartEntityRendererMixin<T extends AbstractMinecartEnti
 
 	@Inject(method = "render(Lnet/minecraft/entity/vehicle/AbstractMinecartEntity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("TAIL"))
 	public void minecarttweaks$render(T child, float yaw, float tickDelta, MatrixStack stack, VertexConsumerProvider provider, int light, CallbackInfo info) {
-		AbstractMinecartEntity parent = child.getLinkedParent();
+		AbstractMinecartEntity parent = ((Linkable) child).getLinkedParent();
 		if(parent != null) {
 			double startX = parent.getX();
 			double startY = parent.getY();
@@ -59,8 +60,8 @@ public abstract class MinecartEntityRendererMixin<T extends AbstractMinecartEnti
 		float length = MathHelper.sqrt(squaredLength) - 1F;
 
 		stack.push();
-		stack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-hAngle - 90));
-		stack.multiply(RotationAxis.POSITIVE_X.rotation(-vAngle));
+		stack.multiply(Axis.Y_POSITIVE.rotationDegrees(-hAngle - 90));
+		stack.multiply(Axis.X_POSITIVE.rotation(-vAngle));
 		stack.translate(0, 0, 0.5);
 		stack.push();
 
@@ -74,26 +75,26 @@ public abstract class MinecartEntityRendererMixin<T extends AbstractMinecartEnti
 		float minV = 0F;
 		float maxV = length / 10;
 		MatrixStack.Entry entry = stack.peek();
-		Matrix4f matrix4f = entry.getPositionMatrix();
-		Matrix3f matrix3f = entry.getNormalMatrix();
+		Matrix4f matrix4f = entry.getModel();
+		Matrix3f matrix3f = entry.getNormal();
 
-		vertexConsumer.vertex(matrix4f, vertX1, vertY1, 0F).color(0, 0, 0, 255).texture(minU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX1, vertY1, length).color(255, 255, 255, 255).texture(minU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX2, vertY2, length).color(255, 255, 255, 255).texture(maxU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX2, vertY2, 0F).color(0, 0, 0, 255).texture(maxU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX1, vertY1, 0F).color(0, 0, 0, 255).uv(minU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX1, vertY1, length).color(255, 255, 255, 255).uv(minU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX2, vertY2, length).color(255, 255, 255, 255).uv(maxU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX2, vertY2, 0F).color(0, 0, 0, 255).uv(maxU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
 
 		stack.pop();
 		stack.translate(0.19, 0.19, 0);
-		stack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90));
+		stack.multiply(Axis.Z_POSITIVE.rotationDegrees(90));
 
 		entry = stack.peek();
-		matrix4f = entry.getPositionMatrix();
-		matrix3f = entry.getNormalMatrix();
+		matrix4f = entry.getModel();
+		matrix3f = entry.getNormal();
 
-		vertexConsumer.vertex(matrix4f, vertX1, vertY1, 0F).color(0, 0, 0, 255).texture(minU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX1, vertY1, length).color(255, 255, 255, 255).texture(minU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX2, vertY2, length).color(255, 255, 255, 255).texture(maxU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX2, vertY2, 0F).color(0, 0, 0, 255).texture(maxU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX1, vertY1, 0F).color(0, 0, 0, 255).uv(minU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX1, vertY1, length).color(255, 255, 255, 255).uv(minU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX2, vertY2, length).color(255, 255, 255, 255).uv(maxU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX2, vertY2, 0F).color(0, 0, 0, 255).uv(maxU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
 
 		stack.pop();
 	}

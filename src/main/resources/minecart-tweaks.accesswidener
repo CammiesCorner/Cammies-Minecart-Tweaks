@@ -1,6 +1,6 @@
 accessWidener v1 named
 
 accessible field net/minecraft/entity/vehicle/AbstractMinecartEntity ADJACENT_RAIL_POSITIONS_BY_SHAPE Ljava/util/Map;
-accessible field net/minecraft/entity/vehicle/AbstractMinecartEntity clientYaw D
-accessible method net/minecraft/entity/vehicle/AbstractMinecartEntity getMaxSpeed ()D
+accessible field net/minecraft/entity/vehicle/AbstractMinecartEntity f_zcmodjhw D
+accessible method net/minecraft/entity/vehicle/AbstractMinecartEntity getMaxOffRailSpeed ()D
 accessible method net/minecraft/entity/vehicle/AbstractMinecartEntity getAdjacentRailPositionsByShape (Lnet/minecraft/block/enums/RailShape;)Lcom/mojang/datafixers/util/Pair;

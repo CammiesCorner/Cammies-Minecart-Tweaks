@@ -1,25 +1,23 @@
 package dev.cammiescorner.cammiesminecarttweaks.client;
 
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
+import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
 import dev.cammiescorner.cammiesminecarttweaks.common.packets.SyncChainedMinecartPacket;
-import dev.cammiescorner.cammiesminecarttweaks.integration.MinecartTweaksConfig;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.vehicle.FurnaceMinecartEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
+import org.quiltmc.loader.api.ModContainer;
+import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer;
+import org.quiltmc.qsl.block.extensions.api.client.BlockRenderLayerMap;
+import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking;
 
-@Environment(EnvType.CLIENT)
 public class MinecartTweaksClient implements ClientModInitializer {
 	@Override
-	public void onInitializeClient() {
+	public void onInitializeClient(ModContainer mod) {
 		ClientPlayNetworking.registerGlobalReceiver(SyncChainedMinecartPacket.ID, SyncChainedMinecartPacket::handle);
-		BlockRenderLayerMap.INSTANCE.putBlocks(RenderLayer.getCutout(), MinecartTweaks.CROSSED_RAIL);
+		BlockRenderLayerMap.put(RenderLayer.getCutout(), MinecartTweaks.CROSSED_RAIL);
 
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 			ItemStack stack = player.getStackInHand(hand);

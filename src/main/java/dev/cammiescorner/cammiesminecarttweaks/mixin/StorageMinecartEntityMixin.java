@@ -1,6 +1,6 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
-import dev.cammiescorner.cammiesminecarttweaks.integration.MinecartTweaksConfig;
+import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.vehicle.StorageMinecartEntity;
 import net.minecraft.item.ItemStack;

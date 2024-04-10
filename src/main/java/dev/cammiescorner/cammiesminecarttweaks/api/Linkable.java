@@ -24,8 +24,8 @@ public interface Linkable {
 	default AbstractMinecartEntity asAbstractMinecartEntity() { return (AbstractMinecartEntity) this; }
 
 	static void setParentChild(@NotNull Linkable parent, @NotNull Linkable child) {
-		unsetParentChild(parent, parent.getLinkedChild());
-		unsetParentChild(child, child.getLinkedParent());
+		unsetParentChild(parent, (Linkable) parent.getLinkedChild());
+		unsetParentChild(child, (Linkable) child.getLinkedParent());
 		parent.setLinkedChild(child.asAbstractMinecartEntity());
 		child.setLinkedParent(parent.asAbstractMinecartEntity());
 	}

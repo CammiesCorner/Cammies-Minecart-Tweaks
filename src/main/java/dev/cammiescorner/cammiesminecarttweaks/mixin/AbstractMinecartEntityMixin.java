@@ -3,8 +3,8 @@ package dev.cammiescorner.cammiesminecarttweaks.mixin;
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import dev.cammiescorner.cammiesminecarttweaks.common.packets.SyncChainedMinecartPacket;
-import dev.cammiescorner.cammiesminecarttweaks.integration.MinecartTweaksConfig;
-import dev.cammiescorner.cammiesminecarttweaks.utils.MinecartHelper;
+import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
+import dev.cammiescorner.cammiesminecarttweaks.common.utils.MinecartHelper;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -39,10 +39,10 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 	public AbstractMinecartEntityMixin(EntityType<?> type, World world) { super(type, world); }
 
-	@Inject(method = "getMaxSpeed", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "getMaxOffRailSpeed", at = @At("RETURN"), cancellable = true)
 	public void minecarttweaks$increaseSpeed(CallbackInfoReturnable<Double> info) {
 		if(getLinkedParent() != null)
-			info.setReturnValue(getLinkedParent().getMaxSpeed());
+			info.setReturnValue(getLinkedParent().getMaxOffRailSpeed());
 		else
 			info.setReturnValue(MinecartTweaksConfig.getOtherMinecartSpeed());
 	}
@@ -73,20 +73,20 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 						setVelocity(Vec3d.ZERO);
 				}
 				else {
-					Linkable.unsetParentChild(this.getLinkedParent(), this);
+					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
 					dropStack(new ItemStack(Items.CHAIN));
 					return;
 				}
 
 				if(getLinkedParent().isRemoved())
-					Linkable.unsetParentChild(getLinkedParent(), this);
+					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
 			}
 			else {
 				MinecartHelper.shouldSlowDown((AbstractMinecartEntity) (Object) this, this.getWorld());
 			}
 
 			if(getLinkedChild() != null && getLinkedChild().isRemoved())
-				Linkable.unsetParentChild(this, getLinkedChild());
+				Linkable.unsetParentChild(this, (Linkable) getLinkedChild());
 
 			this.getWorld().getOtherEntities(this, this.getBoundingBox().stretch(this.getVelocity()), this::collidesWith).forEach(other -> {
 				if(other instanceof AbstractMinecartEntity minecart && getLinkedParent() != null && !getLinkedParent().equals(minecart)) {
@@ -111,7 +111,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 					float yaw = (float) MathHelper.wrapDegrees(Math.toDegrees(Math.atan2(directionVec.getZ(), directionVec.getX())) - 90);
 
 					for(Entity passenger : getPassengerList()) {
-						float wantedYaw = MathHelper.wrapDegrees(MathHelper.clampAngle(passenger.getYaw(), yaw, MinecartTweaksConfig.maxViewAngle) - passenger.getYaw());
+						float wantedYaw = MathHelper.wrapDegrees(MathHelper.stepAngleTowards(passenger.getYaw(), yaw, MinecartTweaksConfig.maxViewAngle) - passenger.getYaw());
 						float steps = Math.abs(wantedYaw) / 5F;
 
 						if(wantedYaw >= steps)
@@ -178,7 +178,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 	}
 
 	@Override
-	public AbstractMinecartEntity getLinkedChild() {
+	public @Nullable AbstractMinecartEntity getLinkedChild() {
 		var entity = this.getWorld() instanceof ServerWorld serverWorld && this.childUuid != null ? serverWorld.getEntity(this.childUuid) : this.getWorld().getEntityById(this.childIdClient);
 		return entity instanceof AbstractMinecartEntity abstractMinecartEntity ? abstractMinecartEntity : null;
 	}

@@ -1,4 +1,4 @@
-package dev.cammiescorner.cammiesminecarttweaks.integration;
+package dev.cammiescorner.cammiesminecarttweaks.common.compat;
 
 import eu.midnightdust.lib.config.MidnightConfig;
 
@@ -17,7 +17,6 @@ public class MinecartTweaksConfig extends MidnightConfig {
 	@Entry public static boolean shouldPoweredRailsStopFurnace = true;
 	@Entry public static boolean furnacesCanUseAllFuels = true;
 	@Entry public static boolean furnaceMinecartsLoadChunks = false;
-	@Entry public static boolean toolsHarvestBlockMinecarts = true;
 
 	public static double getFurnaceMinecartSpeed() {
 		return Math.max(0.1, furnaceMinecartSpeed * 0.05);
