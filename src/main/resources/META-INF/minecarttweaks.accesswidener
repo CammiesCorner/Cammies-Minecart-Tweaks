@@ -4,7 +4,3 @@ accessible field net/minecraft/entity/vehicle/AbstractMinecartEntity ADJACENT_RA
 accessible field net/minecraft/entity/vehicle/AbstractMinecartEntity clientYaw D
 accessible method net/minecraft/entity/vehicle/AbstractMinecartEntity getMaxSpeed ()D
 accessible method net/minecraft/entity/vehicle/AbstractMinecartEntity getAdjacentRailPositionsByShape (Lnet/minecraft/block/enums/RailShape;)Lcom/mojang/datafixers/util/Pair;
-
-accessible method net/minecraft/entity/damage/DamageSource <init> (Ljava/lang/String;)V
-accessible method net/minecraft/entity/damage/DamageSource setBypassesArmor ()Lnet/minecraft/entity/damage/DamageSource;
-accessible method net/minecraft/entity/damage/DamageSource setUnblockable ()Lnet/minecraft/entity/damage/DamageSource;

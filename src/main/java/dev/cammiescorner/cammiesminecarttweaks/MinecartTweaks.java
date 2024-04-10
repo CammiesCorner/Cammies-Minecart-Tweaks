@@ -10,11 +10,12 @@ import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.damage.EntityDamageSource;
+import net.minecraft.entity.damage.DamageType;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.entity.vehicle.MinecartEntity;
 import net.minecraft.item.*;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.entry.RegistryEntry.Direct;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.server.world.ServerWorld;
@@ -147,6 +148,6 @@ public class MinecartTweaks implements ModInitializer {
 	}
 
 	public static DamageSource minecart(Entity entity) {
-		return new EntityDamageSource(MOD_ID + ".minecart", entity);
+		return new DamageSource(new Direct(new DamageType(MOD_ID + ".minecart", 1)), entity);
 	}
 }

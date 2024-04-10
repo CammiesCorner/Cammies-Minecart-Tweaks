@@ -72,7 +72,7 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 
 	@Inject(method = "tick", at = @At("HEAD"))
 	public void minecarttweaks$loadChunks(CallbackInfo info) {
-		if(MinecartTweaksConfig.furnaceMinecartsLoadChunks && world instanceof ServerWorld server) {
+		if(MinecartTweaksConfig.furnaceMinecartsLoadChunks && this.getWorld() instanceof ServerWorld server) {
 			ChunkPos currentChunkPos = ChunkSectionPos.from(this).toChunkPos();
 
 			if(fuel > 0)
@@ -103,7 +103,7 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 			}
 		}
 
-		AtomicBoolean shouldSlowDown = new AtomicBoolean(MinecartHelper.shouldSlowDown(this, world));
+		AtomicBoolean shouldSlowDown = new AtomicBoolean(MinecartHelper.shouldSlowDown(this, this.getWorld()));
 		train.add(this);
 
 		if(getLinkedChild() != null) {
@@ -114,7 +114,7 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 				train.add(linkable.getLinkedChild());
 			}
 
-			train.forEach(child -> shouldSlowDown.set(shouldSlowDown.get() || MinecartHelper.shouldSlowDown(child, world)));
+			train.forEach(child -> shouldSlowDown.set(shouldSlowDown.get() || MinecartHelper.shouldSlowDown(child, this.getWorld())));
 		}
 
 
@@ -140,7 +140,7 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 
 				if(stack.getItem() instanceof BucketItem) {
 					SoundEvent soundEvent = SoundEvents.ITEM_BUCKET_EMPTY_LAVA;
-					world.playSound(player, player.getBlockPos(), soundEvent, SoundCategory.BLOCKS, 1.0f, 1.0f);
+					this.getWorld().playSound(player, player.getBlockPos(), soundEvent, SoundCategory.BLOCKS, 1.0f, 1.0f);
 				}
 
 				fuel = (int) Math.min(MinecartTweaksConfig.furnaceMaxBurnTime, fuel + (fuelTime * 2.25));
@@ -152,7 +152,7 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 			}
 
 			ACCEPTABLE_FUEL = Ingredient.empty();
-			info.setReturnValue(ActionResult.success(world.isClient));
+			info.setReturnValue(ActionResult.success(this.getWorld().isClient));
 		}
 		else {
 			ACCEPTABLE_FUEL = OLD_ACCEPTABLE_FUEL;
