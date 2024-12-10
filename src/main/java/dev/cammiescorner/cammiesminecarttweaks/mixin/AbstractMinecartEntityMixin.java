@@ -88,7 +88,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 			if(getLinkedChild() != null && getLinkedChild().isRemoved())
 				Linkable.unsetParentChild(this, (Linkable) getLinkedChild());
 
-			for(Entity other : getWorld().getOtherEntities(this, getBoundingBox().stretch(getVelocity()), this::collidesWith)) {
+			for(Entity other : getWorld().getOtherEntities(this, getBoundingBox().expand(1, 0, 1), this::collidesWith)) {
 				if(other instanceof AbstractMinecartEntity minecart && getLinkedParent() != null && !getLinkedParent().equals(minecart))
 					minecart.setVelocity(getVelocity());
 
