@@ -33,7 +33,6 @@ import java.util.UUID;
 public abstract class AbstractMinecartEntityMixin extends Entity implements Linkable {
 	@Unique private @Nullable UUID parentUuid;
 	@Unique private @Nullable UUID childUuid;
-
 	@Unique private int parentIdClient;
 	@Unique private int childIdClient;
 
