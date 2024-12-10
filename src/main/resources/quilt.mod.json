@@ -28,7 +28,7 @@
 		"entrypoints": {
 			"init": "dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks",
 			"client_init": "dev.cammiescorner.cammiesminecarttweaks.client.MinecartTweaksClient",
-			"modmenu": "dev.cammiescorner.cammiesminecarttweaks.common.compat.ModMenuCompat"
+			"modmenu": "dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksModMenu"
 		},
 		"depends": [
 			{

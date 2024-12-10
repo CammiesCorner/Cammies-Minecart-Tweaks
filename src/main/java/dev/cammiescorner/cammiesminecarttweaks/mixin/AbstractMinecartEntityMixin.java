@@ -2,8 +2,8 @@ package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
-import dev.cammiescorner.cammiesminecarttweaks.common.packets.SyncChainedMinecartPacket;
 import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
+import dev.cammiescorner.cammiesminecarttweaks.common.packets.SyncChainedMinecartPacket;
 import dev.cammiescorner.cammiesminecarttweaks.common.utils.MinecartHelper;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.entity.Entity;
@@ -88,10 +88,9 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 			if(getLinkedChild() != null && getLinkedChild().isRemoved())
 				Linkable.unsetParentChild(this, (Linkable) getLinkedChild());
 
-			this.getWorld().getOtherEntities(this, this.getBoundingBox().stretch(this.getVelocity()), this::collidesWith).forEach(other -> {
-				if(other instanceof AbstractMinecartEntity minecart && getLinkedParent() != null && !getLinkedParent().equals(minecart)) {
+			for(Entity other : getWorld().getOtherEntities(this, getBoundingBox().stretch(getVelocity()), this::collidesWith)) {
+				if(other instanceof AbstractMinecartEntity minecart && getLinkedParent() != null && !getLinkedParent().equals(minecart))
 					minecart.setVelocity(getVelocity());
-				}
 
 				float damage = MinecartTweaksConfig.minecartDamage;
 
@@ -101,7 +100,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 					living.velocityDirty = true;
 					living.damage(MinecartTweaks.minecart(this), damage);
 				}
-			});
+			}
 		}
 		else {
 			if(MinecartTweaksConfig.playerViewIsLocked) {
