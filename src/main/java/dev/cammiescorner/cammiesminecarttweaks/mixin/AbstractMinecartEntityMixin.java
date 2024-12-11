@@ -1,11 +1,13 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Local;
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
-import dev.cammiescorner.cammiesminecarttweaks.common.packets.SyncChainedMinecartPacket;
-import dev.cammiescorner.cammiesminecarttweaks.common.utils.MinecartHelper;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import dev.cammiescorner.cammiesminecarttweaks.common.utils.MinecartPhysicsAccess;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -14,11 +16,11 @@ import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,16 +29,69 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Mixin(AbstractMinecartEntity.class)
-public abstract class AbstractMinecartEntityMixin extends Entity implements Linkable {
-	@Unique private @Nullable UUID parentUuid;
-	@Unique private @Nullable UUID childUuid;
-	@Unique private int parentIdClient;
-	@Unique private int childIdClient;
+public abstract class AbstractMinecartEntityMixin extends Entity implements Linkable, MinecartPhysicsAccess {
+	@Unique private final List<AbstractMinecartEntity> connectedMinecarts = new ArrayList<>();
+	@Unique private boolean isMovingOnRail;
 
 	public AbstractMinecartEntityMixin(EntityType<?> type, World world) { super(type, world); }
+
+	@Inject(method = "moveOnRail", at = @At("HEAD"))
+	public void minecarttweaks$isMovingOnRail(BlockPos pos, BlockState state, CallbackInfo info) {
+		this.isMovingOnRail = true;
+	}
+
+	@Inject(method = "moveOnRail", at = @At(
+		value = "INVOKE", target = "Lnet/minecraft/entity/vehicle/AbstractMinecartEntity;applySlowdown()V", shift = At.Shift.BEFORE
+	))
+	public void fixVelocityLoss(BlockPos previousPos, BlockState state, CallbackInfo info, @Local(ordinal = 1) Vec3d previousVelocity) {
+		if(this.getBlockPos().equals(previousPos))
+			return;
+
+		boolean hasHitWall = false;
+		Vec3d velocity = this.getVelocity();
+
+		if(velocity.x == 0 && Math.abs(previousVelocity.x) > 0.5) {
+			velocity = velocity.withAxis(Direction.Axis.X, previousVelocity.x * this.getVelocityMultiplier());
+			hasHitWall = true;
+		}
+
+		if(velocity.z == 0 && Math.abs(previousVelocity.z) > 0.5) {
+			velocity = velocity.withAxis(Direction.Axis.Z, previousVelocity.z * this.getVelocityMultiplier());
+			hasHitWall = true;
+		}
+
+		if(!hasHitWall)
+			return;
+
+		BlockState blockState = this.getWorld().getBlockState(this.getBlockPos());
+
+		if(blockState.isOf(Blocks.RAIL))
+			this.setVelocity(velocity);
+	}
+
+	@Inject(method = "moveOnRail", at = @At("RETURN"))
+	public void minecarttweaks$isNotMovingOnRail(BlockPos pos, BlockState state, CallbackInfo info) {
+		this.isMovingOnRail = false;
+	}
+
+	@ModifyExpressionValue(method = "tick", at = @At(
+		value = "FIELD", target = "Lnet/minecraft/world/World;isClient:Z"
+	))
+	private boolean minecarttweaks$simulateMinecartOnClient(boolean original) {
+		return false;
+	}
+
+	@Inject(method = "updateTrackedPositionAndAngles", at = @At("HEAD"), cancellable = true)
+	private void minecarttweaks$setMinecartPosLikeOtherEntities(double x, double y, double z, float yaw, float pitch, int interpolationSteps, boolean interpolate, CallbackInfo info) {
+		if(getWorld().isClient) {
+			super.updateTrackedPositionAndAngles(x, y, z, yaw, pitch, interpolationSteps, interpolate);
+			info.cancel();
+		}
+	}
 
 	@Inject(method = "getMaxOffRailSpeed", at = @At("RETURN"), cancellable = true)
 	public void minecarttweaks$increaseSpeed(CallbackInfoReturnable<Double> info) {
@@ -49,41 +104,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 	@Inject(method = "tick", at = @At("HEAD"))
 	public void minecarttweaks$tick(CallbackInfo info) {
 		if(!this.getWorld().isClient()) {
-			if(getLinkedParent() != null) {
-				double distance = getLinkedParent().distanceTo(this) - 1;
-
-				if(distance <= 4) {
-					Vec3d direction = getLinkedParent().getPos().subtract(getPos()).normalize();
-
-					if(distance > 1) {
-						Vec3d parentVelocity = getLinkedParent().getVelocity();
-
-						if(parentVelocity.length() == 0) {
-							setVelocity(direction.multiply(0.05));
-						}
-						else {
-							setVelocity(direction.multiply(parentVelocity.length()));
-							setVelocity(getVelocity().multiply(distance));
-						}
-					}
-					else if(distance < 0.8)
-						setVelocity(direction.multiply(-0.05));
-					else
-						setVelocity(Vec3d.ZERO);
-				}
-				else {
-					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
-					dropStack(new ItemStack(Items.CHAIN));
-					return;
-				}
-
-				if(getLinkedParent().isRemoved())
-					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
-			}
-			else {
-				MinecartHelper.shouldSlowDown((AbstractMinecartEntity) (Object) this, this.getWorld());
-			}
-
+			// TODO make system where the cart with the highest velocity has the most influence, no more of this parent/child crap
 			if(getLinkedChild() != null && getLinkedChild().isRemoved())
 				Linkable.unsetParentChild(this, (Linkable) getLinkedChild());
 
@@ -110,7 +131,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 					for(Entity passenger : getPassengerList()) {
 						float wantedYaw = MathHelper.wrapDegrees(MathHelper.stepAngleTowards(passenger.getYaw(), yaw, MinecartTweaksConfig.maxViewAngle) - passenger.getYaw());
-						float steps = Math.abs(wantedYaw) / 5F;
+						float steps = Math.abs(wantedYaw) / 5f;
 
 						if(wantedYaw >= steps)
 							passenger.setYaw(passenger.getYaw() + steps);
@@ -130,18 +151,12 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 	@Inject(method = "readCustomDataFromNbt", at = @At("HEAD"))
 	public void minecarttweaks$readNbt(NbtCompound nbt, CallbackInfo info) {
-		if(nbt.contains("ParentUuid"))
-			parentUuid = nbt.getUuid("ParentUuid");
-		if(nbt.contains("ChildUuid"))
-			childUuid = nbt.getUuid("ChildUuid");
+
 	}
 
 	@Inject(method = "writeCustomDataToNbt", at = @At("HEAD"))
 	public void minecarttweaks$writeNbt(NbtCompound nbt, CallbackInfo info) {
-		if(this.parentUuid != null)
-			nbt.putUuid("ParentUuid", this.parentUuid);
-		if(this.childUuid != null)
-			nbt.putUuid("ChildUuid", this.childUuid);
+
 	}
 
 	@Redirect(method = "moveOnRail", at = @At(value = "INVOKE", target = "Ljava/lang/Math;min(DD)D"))
@@ -150,50 +165,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 	}
 
 	@Override
-	public AbstractMinecartEntity getLinkedParent() {
-		var entity = this.getWorld() instanceof ServerWorld serverWorld && this.parentUuid != null ? serverWorld.getEntity(this.parentUuid) : this.getWorld().getEntityById(this.parentIdClient);
-		return entity instanceof AbstractMinecartEntity abstractMinecartEntity ? abstractMinecartEntity : null;
-	}
-
-	@Override
-	public void setLinkedParent(@Nullable AbstractMinecartEntity parent) {
-		if (parent != null) {
-			this.parentUuid = parent.getUuid();
-			this.parentIdClient = parent.getId();
-		} else {
-			this.parentUuid = null;
-			this.parentIdClient = -1;
-		}
-
-		if (!this.getWorld().isClient()) {
-			PlayerLookup.tracking(this).forEach(player -> SyncChainedMinecartPacket.send(this.getLinkedParent(), (AbstractMinecartEntity) (Object) this, player));
-		}
-	}
-
-	@Override
-	public void setLinkedParentClient(int id) {
-		this.parentIdClient = id;
-	}
-
-	@Override
-	public @Nullable AbstractMinecartEntity getLinkedChild() {
-		var entity = this.getWorld() instanceof ServerWorld serverWorld && this.childUuid != null ? serverWorld.getEntity(this.childUuid) : this.getWorld().getEntityById(this.childIdClient);
-		return entity instanceof AbstractMinecartEntity abstractMinecartEntity ? abstractMinecartEntity : null;
-	}
-
-	@Override
-	public void setLinkedChild(@Nullable AbstractMinecartEntity child) {
-		if (child != null) {
-			this.childUuid = child.getUuid();
-			this.childIdClient = child.getId();
-		} else {
-			this.childUuid = null;
-			this.childIdClient = -1;
-		}
-	}
-
-	@Override
-	public void setLinkedChildClient(int id) {
-		this.childIdClient = id;
+	public boolean isSelfMovingOnRail() {
+		return isMovingOnRail;
 	}
 }

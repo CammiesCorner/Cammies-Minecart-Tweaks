@@ -1,11 +1,7 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
-import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
-import dev.cammiescorner.cammiesminecarttweaks.common.utils.MinecartHelper;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.PoweredRailBlock;
+import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
 import net.minecraft.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
@@ -24,7 +20,6 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.ChunkSectionPos;
 import net.minecraft.world.World;
@@ -37,7 +32,6 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Mixin(FurnaceMinecartEntity.class)
 public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity implements Linkable {
@@ -82,44 +76,6 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 
 			prevChunkPos = currentChunkPos;
 		}
-	}
-
-	@Inject(method = "moveOnRail", at = @At("TAIL"))
-	public void minecarttweaks$slowDown(BlockPos pos, BlockState state, CallbackInfo info) {
-		if(MinecartTweaksConfig.shouldPoweredRailsStopFurnace) {
-			if(altFuel <= 0 && fuel > 0) {
-				if(state.isOf(Blocks.POWERED_RAIL) && !state.get(PoweredRailBlock.POWERED)) {
-					altPushX = pushX;
-					altPushZ = pushZ;
-					altFuel += fuel;
-					fuel = 0;
-				}
-			}
-			else if(!state.isOf(Blocks.POWERED_RAIL) || (state.isOf(Blocks.POWERED_RAIL) && state.get(PoweredRailBlock.POWERED))) {
-				fuel += altFuel;
-				altFuel = 0;
-				pushX = altPushX;
-				pushZ = altPushZ;
-			}
-		}
-
-		AtomicBoolean shouldSlowDown = new AtomicBoolean(MinecartHelper.shouldSlowDown(this, this.getWorld()));
-		train.add(this);
-
-		if(getLinkedChild() != null) {
-			Linkable linkable = (Linkable) getLinkedChild();
-			train.add(getLinkedChild());
-
-			while((linkable = (Linkable) linkable.getLinkedChild()) instanceof Linkable && !train.contains(linkable)) {
-				train.add(linkable.getLinkedChild());
-			}
-
-			train.forEach(child -> shouldSlowDown.set(shouldSlowDown.get() || MinecartHelper.shouldSlowDown(child, this.getWorld())));
-		}
-
-
-		if(shouldSlowDown.get() && getVelocity().length() > MinecartTweaksConfig.getMaxSpeedAroundTurns())
-			setVelocity(getVelocity().normalize().multiply(MinecartTweaksConfig.getMaxSpeedAroundTurns()));
 	}
 
 	@Inject(method = "interact", at = @At("HEAD"), cancellable = true)
