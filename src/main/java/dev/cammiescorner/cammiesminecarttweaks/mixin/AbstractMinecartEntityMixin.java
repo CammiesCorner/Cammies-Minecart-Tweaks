@@ -135,37 +135,37 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 //
 //			setVelocity(avgVelocity);
 
-//			if(getLinkedParent() != null) {
-//				double distance = getLinkedParent().distanceTo(this) - 1;
-//
-//				if(distance <= 4) {
-//					Vec3d direction = getLinkedParent().getPos().subtract(getPos()).normalize();
-//
-//					if(distance > 1) {
-//						Vec3d parentVelocity = getLinkedParent().getVelocity();
-//
-//						if(parentVelocity.length() == 0) {
-//							setVelocity(direction.multiply(0.05));
-//						}
-//						else {
-//							setVelocity(direction.multiply(parentVelocity.length()));
-//							setVelocity(getVelocity().multiply(distance));
-//						}
-//					}
-//					else if(distance < 0.8)
-//						setVelocity(direction.multiply(-0.05));
-//					else
-//						setVelocity(Vec3d.ZERO);
-//				}
-//				else {
-//					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
-//					dropStack(new ItemStack(Items.CHAIN));
-//					return;
-//				}
-//
-//				if(getLinkedParent().isRemoved())
-//					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
-//			}
+			if(getLinkedParent() != null) {
+				double distance = getLinkedParent().distanceTo(this) - 1;
+
+				if(distance <= 4) {
+					Vec3d direction = getLinkedParent().getPos().subtract(getPos()).normalize();
+
+					if(distance > 1) {
+						Vec3d parentVelocity = getLinkedParent().getVelocity();
+
+						if(parentVelocity.length() == 0) {
+							setVelocity(direction.multiply(0.05));
+						}
+						else {
+							setVelocity(direction.multiply(parentVelocity.length()));
+							setVelocity(getVelocity().multiply(distance));
+						}
+					}
+					else if(distance < 0.8)
+						setVelocity(direction.multiply(-0.05));
+					else
+						setVelocity(Vec3d.ZERO);
+				}
+				else {
+					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
+					dropStack(new ItemStack(Items.CHAIN));
+					return;
+				}
+
+				if(getLinkedParent().isRemoved())
+					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
+			}
 
 			if(getLinkedChild() != null && getLinkedChild().isRemoved())
 				Linkable.unsetParentChild(this, (Linkable) getLinkedChild());
