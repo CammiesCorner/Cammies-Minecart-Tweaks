@@ -1,6 +1,8 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
@@ -25,7 +27,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -39,35 +40,58 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 	public AbstractMinecartEntityMixin(EntityType<?> type, World world) { super(type, world); }
 
+	/*	MIT License
+
+		Copyright (c) 2022 2No2Name, Inspector Talon
+
+		Permission is hereby granted, free of charge, to any person obtaining a copy
+		of this software and associated documentation files (the "Software"), to deal
+		in the Software without restriction, including without limitation the rights
+		to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+		copies of the Software, and to permit persons to whom the Software is
+		furnished to do so, subject to the following conditions:
+
+		The above copyright notice and this permission notice shall be included in all
+		copies or substantial portions of the Software.
+
+		THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+		IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+		FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+		AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+		LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+		OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+		SOFTWARE.
+	*/
+	/* === From Here === */
 	@Inject(method = "moveOnRail", at = @At("HEAD"))
 	public void minecarttweaks$isMovingOnRail(BlockPos pos, BlockState state, CallbackInfo info) {
-		this.isMovingOnRail = true;
+		isMovingOnRail = true;
 	}
 
 	@Inject(method = "moveOnRail", at = @At(
 		value = "INVOKE", target = "Lnet/minecraft/entity/vehicle/AbstractMinecartEntity;applySlowdown()V", shift = At.Shift.BEFORE
 	))
 	public void fixVelocityLoss(BlockPos previousPos, BlockState state, CallbackInfo info, @Local(ordinal = 1) Vec3d previousVelocity) {
-		if(this.getBlockPos().equals(previousPos))
+		if(getBlockPos().equals(previousPos))
 			return;
 
 		boolean hasHitWall = false;
-		Vec3d velocity = this.getVelocity();
+		Vec3d velocity = getVelocity();
 
 		if(velocity.x == 0 && Math.abs(previousVelocity.x) > 0.5) {
-			velocity = velocity.withAxis(Direction.Axis.X, previousVelocity.x * this.getVelocityMultiplier());
+			velocity = velocity.withAxis(Direction.Axis.X, previousVelocity.x * getVelocityMultiplier());
 			hasHitWall = true;
 		}
 
 		if(velocity.z == 0 && Math.abs(previousVelocity.z) > 0.5) {
-			velocity = velocity.withAxis(Direction.Axis.Z, previousVelocity.z * this.getVelocityMultiplier());
+			velocity = velocity.withAxis(Direction.Axis.Z, previousVelocity.z * getVelocityMultiplier());
 			hasHitWall = true;
 		}
 
 		if(!hasHitWall)
 			return;
 
-		BlockState blockState = this.getWorld().getBlockState(this.getBlockPos());
+		BlockState blockState = getWorld().getBlockState(getBlockPos());
 
 		if(blockState.isOf(Blocks.RAIL))
 			this.setVelocity(velocity);
@@ -75,7 +99,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 	@Inject(method = "moveOnRail", at = @At("RETURN"))
 	public void minecarttweaks$isNotMovingOnRail(BlockPos pos, BlockState state, CallbackInfo info) {
-		this.isMovingOnRail = false;
+		isMovingOnRail = false;
 	}
 
 	@ModifyExpressionValue(method = "tick", at = @At(
@@ -92,6 +116,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 			info.cancel();
 		}
 	}
+	/* === To Here === */
 
 	@Inject(method = "getMaxOffRailSpeed", at = @At("RETURN"), cancellable = true)
 	public void minecarttweaks$increaseSpeed(CallbackInfoReturnable<Double> info) {
@@ -103,8 +128,45 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 	@Inject(method = "tick", at = @At("HEAD"))
 	public void minecarttweaks$tick(CallbackInfo info) {
-		if(!this.getWorld().isClient()) {
+		if(!getWorld().isClient()) {
 			// TODO make system where the cart with the highest velocity has the most influence, no more of this parent/child crap
+//			Vec3d avgVelocity = connectedMinecarts.stream().map(Entity::getVelocity).reduce(Vec3d.ZERO, Vec3d::add).multiply(1f / connectedMinecarts.size());
+//			double avgSpeed = avgVelocity.horizontalLength();
+//
+//			setVelocity(avgVelocity);
+
+//			if(getLinkedParent() != null) {
+//				double distance = getLinkedParent().distanceTo(this) - 1;
+//
+//				if(distance <= 4) {
+//					Vec3d direction = getLinkedParent().getPos().subtract(getPos()).normalize();
+//
+//					if(distance > 1) {
+//						Vec3d parentVelocity = getLinkedParent().getVelocity();
+//
+//						if(parentVelocity.length() == 0) {
+//							setVelocity(direction.multiply(0.05));
+//						}
+//						else {
+//							setVelocity(direction.multiply(parentVelocity.length()));
+//							setVelocity(getVelocity().multiply(distance));
+//						}
+//					}
+//					else if(distance < 0.8)
+//						setVelocity(direction.multiply(-0.05));
+//					else
+//						setVelocity(Vec3d.ZERO);
+//				}
+//				else {
+//					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
+//					dropStack(new ItemStack(Items.CHAIN));
+//					return;
+//				}
+//
+//				if(getLinkedParent().isRemoved())
+//					Linkable.unsetParentChild((Linkable) getLinkedParent(), this);
+//			}
+
 			if(getLinkedChild() != null && getLinkedChild().isRemoved())
 				Linkable.unsetParentChild(this, (Linkable) getLinkedChild());
 
@@ -114,7 +176,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 				float damage = MinecartTweaksConfig.minecartDamage;
 
-				if(damage > 0 && !this.getWorld().isClient() && other instanceof LivingEntity living && living.isAlive() && !living.hasVehicle() && getVelocity().length() > 1.5) {
+				if(damage > 0 && !getWorld().isClient() && other instanceof LivingEntity living && living.isAlive() && !living.hasVehicle() && getVelocity().length() > 1.5) {
 					Vec3d knockback = living.getVelocity().add(getVelocity().getX() * 0.9, getVelocity().length() * 0.2, getVelocity().getZ() * 0.9);
 					living.setVelocity(knockback);
 					living.velocityDirty = true;
@@ -159,8 +221,8 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 	}
 
-	@Redirect(method = "moveOnRail", at = @At(value = "INVOKE", target = "Ljava/lang/Math;min(DD)D"))
-	private double minecarttweaks$uncapSpeed(double garbo, double uncappedSpeed) {
+	@WrapOperation(method = "moveOnRail", at = @At(value = "INVOKE", target = "Ljava/lang/Math;min(DD)D"))
+	private double minecarttweaks$uncapSpeed(double garbo, double uncappedSpeed, Operation<Double> original) {
 		return uncappedSpeed;
 	}
 
