@@ -18,5 +18,10 @@
 	"minecarttweaks.midnightconfig.shouldPoweredRailsStopFurnace": "[Server Only] - Should Powered Rails Stop Furnace Minecarts?",
 	"minecarttweaks.midnightconfig.furnacesCanUseAllFuels": "[Server Only] - Should Furnace Minecarts be able to use all fuels?",
 	"minecarttweaks.midnightconfig.furnaceMinecartsLoadChunks": "[Server Only] - Should Furnace Minecarts be able to load chunks?",
-	"minecarttweaks.midnightconfig.toolsHarvestBlockMinecarts": "[Server Only] - Can tools harvest Minecarts with blocks in them?"
+	"minecarttweaks.midnightconfig.toolsHarvestBlockMinecarts": "[Server Only] - Can tools harvest Minecarts with blocks in them?",
+
+  "advancements.minecarttweaks.ride_minecart.title": "On The Railroad",
+  "advancements.minecarttweaks.ride_minecart.description": "Ride in a Minecart",
+  "advancements.minecarttweaks.die_by_minecart.title": "SPLAT!",
+  "advancements.minecarttweaks.die_by_minecart.description": "Why did the chicken cross the railroad?"
 }

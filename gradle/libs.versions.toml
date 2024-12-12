@@ -1,26 +1,20 @@
 [versions]
-# The latest versions are available at https://lambdaurora.dev/tools/import_quilt.html
 minecraft = "1.20.1"
-quilt_mappings = "1.20.1+build.23"
-quilt_loader = "0.24.0"
+yarn_mappings = "1.20.1+build.10"
+fabric_loader = "0.16.9"
 
-quilted_fabric_api = "7.3.1+0.89.3-1.20.1"
+fabric_api = "0.92.2+1.20.1"
 modmenu = "7.2.2"
-midnightlib = "1.4.1-quilt"
+midnightlib = "1.4.1-fabric"
 
 [libraries]
 minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
-quilt_mappings = { module = "org.quiltmc:quilt-mappings", version.ref = "quilt_mappings" }
-quilt_loader = { module = "org.quiltmc:quilt-loader", version.ref = "quilt_loader" }
+yarn_mappings = { module = "net.fabricmc:yarn", version.ref = "yarn_mappings" }
+fabric_loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric_loader" }
 
-quilted_fabric_api = { module = "org.quiltmc.quilted-fabric-api:quilted-fabric-api", version.ref = "quilted_fabric_api" }
-quilted_fabric_api_deprecated = { module = "org.quiltmc.quilted-fabric-api:quilted-fabric-api-deprecated", version.ref = "quilted_fabric_api" }
+fabric_api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric_api" }
 modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu" }
 midnightlib = { module = "maven.modrinth:midnightlib", version.ref = "midnightlib" }
 
 # If you have multiple similar dependencies, you can declare a dependency bundle and reference it on the build script with "libs.bundles.example".
 [bundles]
-quilted_fabric_api = ["quilted_fabric_api", "quilted_fabric_api_deprecated"]
-
-[plugins]
-quilt_loom = { id = "org.quiltmc.loom", version = "1.6.+" }

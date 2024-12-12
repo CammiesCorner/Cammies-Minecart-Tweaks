@@ -1,8 +1,8 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
 import dev.cammiescorner.cammiesminecarttweaks.common.packets.SyncChainedMinecartPacket;
-import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.server.network.EntityTrackerEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Final;
@@ -19,9 +19,9 @@ public class EntityTrackerEntryMixin {
 
     @Inject(method = "startTracking", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;onStartedTrackingBy(Lnet/minecraft/server/network/ServerPlayerEntity;)V"))
     public void minecarttweaks$sendLinkingInitData(ServerPlayerEntity player, CallbackInfo ci) {
-        if (this.entity instanceof Linkable linkable) {
-            SyncChainedMinecartPacket.send(linkable.getLinkedParent(), this.entity, player);
-            SyncChainedMinecartPacket.send(this.entity, ((Linkable) this.entity).getLinkedChild(), player);
+        if (this.entity instanceof AbstractMinecartEntity minecart) {
+            SyncChainedMinecartPacket.send(minecart.getLinkedParent(), this.entity, player);
+            SyncChainedMinecartPacket.send(this.entity, minecart.getLinkedChild(), player);
         }
     }
 }

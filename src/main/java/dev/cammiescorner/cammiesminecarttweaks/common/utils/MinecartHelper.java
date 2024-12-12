@@ -139,8 +139,8 @@ public class MinecartHelper {
 		if (context instanceof EntityShapeContextAccessor entityContext) {
 			Entity entity = entityContext.getEntity();
 
-			if(entity instanceof AbstractMinecartEntity cart && cart instanceof MinecartPhysicsAccess cartAccess) {
-				if(cartAccess.isSelfMovingOnRail()) {
+			if(entity instanceof AbstractMinecartEntity cart) {
+				if(cart.isSelfMovingOnRail()) {
 					Set<Direction> derailFixWalls = DERAIL_FIX_WALLS.get(railShape);
 
 					Set<VoxelShape> selectedWalls = new ObjectArraySet<>();

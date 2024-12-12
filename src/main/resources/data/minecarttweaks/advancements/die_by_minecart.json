@@ -1,0 +1,42 @@
+{
+  "parent": "minecarttweaks:ride_minecart",
+  "display": {
+    "icon": {
+      "item": "minecraft:chicken"
+    },
+    "title": {
+      "translate": "advancements.minecarttweaks.die_by_minecart.title"
+    },
+    "description": {
+      "translate": "advancements.minecarttweaks.die_by_minecart.description"
+    },
+    "announce_to_chat": true,
+    "frame": "task",
+    "hidden": false,
+    "show_toast": true
+  },
+  "criteria": {
+    "die_by_minecart": {
+      "trigger": "minecraft:entity_hurt_player",
+      "conditions": {
+        "damage": {
+          "taken": 20,
+          "blocked": false,
+          "type": {
+            "tags": [
+              {
+                "id": "minecarttweaks:minecart",
+                "expected": true
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "die_by_minecart"
+    ]
+  ]
+}

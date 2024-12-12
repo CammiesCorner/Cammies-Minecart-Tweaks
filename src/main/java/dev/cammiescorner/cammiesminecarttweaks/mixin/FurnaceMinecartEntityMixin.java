@@ -1,6 +1,5 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
-import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
 import net.minecraft.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.entity.EntityType;
@@ -34,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Mixin(FurnaceMinecartEntity.class)
-public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity implements Linkable {
+public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity {
 	@Shadow protected abstract boolean isLit();
 	@Shadow private int fuel;
 	@Shadow public double pushX;
@@ -56,12 +55,12 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 		prevChunkPos = getChunkPos();
 	}
 
-	@Inject(method = "getMaxOffRailSpeed", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "getMaxSpeed", at = @At("RETURN"), cancellable = true)
 	public void minecarttweaks$increaseSpeed(CallbackInfoReturnable<Double> info) {
 		if(isLit())
 			info.setReturnValue(MinecartTweaksConfig.getFurnaceMinecartSpeed());
 		else
-			info.setReturnValue(super.getMaxOffRailSpeed());
+			info.setReturnValue(super.getMaxSpeed());
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))
@@ -134,7 +133,7 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 	}
 
 	@ModifyArg(method = "tick", at = @At(value = "INVOKE",
-			target = "Lnet/minecraft/util/random/RandomGenerator;nextInt(I)I"
+			target = "Lnet/minecraft/util/math/random/Random;nextInt(I)I"
 	))
 	public int minecarttweaks$removeRandom(int i) {
 		return 1;

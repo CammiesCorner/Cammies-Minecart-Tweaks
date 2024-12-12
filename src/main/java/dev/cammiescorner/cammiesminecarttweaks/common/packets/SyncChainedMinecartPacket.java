@@ -2,6 +2,11 @@ package dev.cammiescorner.cammiesminecarttweaks.common.packets;
 
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.world.ClientWorld;
@@ -10,10 +15,6 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
-import org.quiltmc.loader.api.minecraft.ClientOnly;
-import org.quiltmc.qsl.networking.api.PacketByteBufs;
-import org.quiltmc.qsl.networking.api.PacketSender;
-import org.quiltmc.qsl.networking.api.ServerPlayNetworking;
 
 public class SyncChainedMinecartPacket {
 	public static final Identifier ID = MinecartTweaks.id("sync_chained_minecart");
@@ -34,7 +35,7 @@ public class SyncChainedMinecartPacket {
 		}
 	}
 
-	@ClientOnly
+	@Environment(EnvType.CLIENT)
 	public static void handle(MinecraftClient client, ClientPlayNetworkHandler handler, PacketByteBuf buf, PacketSender sender) {
 		boolean parentExists = buf.readBoolean();
 		int parentId = parentExists ? buf.readInt() : -1;

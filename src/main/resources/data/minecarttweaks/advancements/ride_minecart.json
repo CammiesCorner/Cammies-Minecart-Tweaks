@@ -1,0 +1,41 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "item": "minecraft:minecart"
+    },
+    "title": {
+      "translate": "advancements.minecarttweaks.ride_minecart.title"
+    },
+    "description": {
+      "translate": "advancements.minecarttweaks.ride_minecart.description"
+    },
+    "announce_to_chat": true,
+    "frame": "task",
+    "hidden": false,
+    "show_toast": true
+  },
+  "criteria": {
+    "ride_minecart": {
+      "trigger": "minecraft:started_riding",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "vehicle": {
+                "type": "minecraft:minecart"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "ride_minecart"
+    ]
+  ]
+}

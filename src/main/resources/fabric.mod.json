@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "id": "minecarttweaks",
+  "version": "${version}",
+  "name": "Cammies Minecart Tweaks",
+  "description": "Making Minecarts more viable for transportation",
+  "authors": [
+    "Cammie",
+    "Up"
+  ],
+  "contact": {
+    "homepage": "https://cammiescorner.dev",
+    "issues": "https://github.com/CammiePone/Cammies-Minecart-Tweaks/issues",
+    "sources": "https://github.com/CammiePone/Cammies-Minecart-Tweaks"
+  },
+  "license": "Custom License",
+  "icon": "assets/minecarttweaks/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks"
+    ],
+    "client": [
+      "dev.cammiescorner.cammiesminecarttweaks.client.MinecartTweaksClient"
+    ],
+    "modmenu": [
+      "dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksModMenu"
+    ]
+  },
+  "custom": {
+    "loom:injected_interfaces": {
+      "net/minecraft/class_1688": [
+        "dev/cammiescorner/cammiesminecarttweaks/api/Linkable",
+        "dev/cammiescorner/cammiesminecarttweaks/common/utils/MinecartPhysicsAccess"
+      ]
+    }
+  },
+  "mixins": [
+    "minecart-tweaks.mixins.json"
+  ],
+  "access_widener": "minecart-tweaks.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.16.9",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "fabric-api": "*",
+    "midnightlib": ">=1.4.1"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}

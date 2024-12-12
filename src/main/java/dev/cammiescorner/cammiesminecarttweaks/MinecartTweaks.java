@@ -4,19 +4,20 @@ import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import dev.cammiescorner.cammiesminecarttweaks.common.blocks.CrossedRailBlock;
 import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
 import eu.midnightdust.lib.config.MidnightConfig;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.damage.DamageType;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.entity.vehicle.MinecartEntity;
 import net.minecraft.item.*;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Holder;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -24,8 +25,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-import org.quiltmc.loader.api.ModContainer;
-import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -33,19 +32,20 @@ import java.util.Set;
 public class MinecartTweaks implements ModInitializer {
 	public static final String MOD_ID = "minecarttweaks";
 	public static final Block CROSSED_RAIL = new CrossedRailBlock();
+	public static final RegistryKey<DamageType> MINECART_DAMAGE = RegistryKey.of(RegistryKeys.DAMAGE_TYPE, id("minecart"));
 
 	@Override
-	public void onInitialize(ModContainer mod) {
+	public void onInitialize() {
 		MidnightConfig.init(MinecartTweaks.MOD_ID, MinecartTweaksConfig.class);
 
 		Registry.register(Registries.BLOCK, id("crossed_rail"), CROSSED_RAIL);
 		Registry.register(Registries.ITEM, id("crossed_rail"), new BlockItem(CROSSED_RAIL, new Item.Settings()));
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE_BLOCKS).register(entries -> entries.addItem(CROSSED_RAIL));
+		ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register(entries -> entries.add(CROSSED_RAIL));
 
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 			if(entity instanceof MinecartEntity ridableCart && ridableCart.getMinecartType() == AbstractMinecartEntity.Type.RIDEABLE) {
-				AbstractMinecartEntity parent = ((Linkable) ridableCart).getLinkedParent();
-				AbstractMinecartEntity child = ((Linkable) ridableCart).getLinkedChild();
+				AbstractMinecartEntity parent = ridableCart.getLinkedParent();
+				AbstractMinecartEntity child = ridableCart.getLinkedChild();
 				ItemStack stack = player.getStackInHand(hand);
 				Item item = stack.getItem();
 				AbstractMinecartEntity.Type type = AbstractMinecartEntity.Type.RIDEABLE;
@@ -64,12 +64,12 @@ public class MinecartTweaks implements ModInitializer {
 					world.spawnEntity(minecart);
 
 					if(parent != null) {
-						Linkable.unsetParentChild((Linkable) parent, (Linkable) ridableCart);
-						Linkable.setParentChild((Linkable) parent, (Linkable) minecart);
+						Linkable.unsetParentChild(parent, ridableCart);
+						Linkable.setParentChild(parent, minecart);
 					}
 					if(child != null) {
-						Linkable.unsetParentChild((Linkable) ridableCart, (Linkable) child);
-						Linkable.setParentChild((Linkable) minecart, (Linkable) child);
+						Linkable.unsetParentChild(ridableCart, child);
+						Linkable.setParentChild(minecart, child);
 					}
 
 					ridableCart.remove(Entity.RemovalReason.DISCARDED);
@@ -95,22 +95,21 @@ public class MinecartTweaks implements ModInitializer {
 						if(nbt.contains("ParentEntity") && !cart.getUuid().equals(nbt.getUuid("ParentEntity"))) {
 							if(server.getEntity(nbt.getUuid("ParentEntity")) instanceof AbstractMinecartEntity parent) {
 								Set<Linkable> train = new HashSet<>();
-								train.add((Linkable) parent);
+								train.add(parent);
 
 								AbstractMinecartEntity nextParent;
-								while((nextParent = ((Linkable) parent).getLinkedParent()) instanceof Linkable && !train.contains(nextParent)) {
-									train.add((Linkable) nextParent);
+								while((nextParent = parent.getLinkedParent()) != null && !train.contains(nextParent)) {
+									train.add(nextParent);
 								}
 
-								if(train.contains(cart) || ((Linkable) parent).getLinkedChild() != null) {
+								if(train.contains(cart) || parent.getLinkedChild() != null) {
 									player.sendMessage(Text.translatable(MinecartTweaks.MOD_ID + ".cant_link_to_engine").formatted(Formatting.RED), true);
 								}
 								else {
-									if(((Linkable) cart).getLinkedParent() != null) {
-										Linkable.unsetParentChild((Linkable) cart, (Linkable) ((Linkable) cart).getLinkedParent());
-									}
+									if(cart.getLinkedParent() != null)
+										Linkable.unsetParentChild(cart, cart.getLinkedParent());
 
-									Linkable.setParentChild((Linkable) parent, (Linkable) cart);
+									Linkable.setParentChild(parent, cart);
 								}
 							}
 							else {
@@ -146,9 +145,5 @@ public class MinecartTweaks implements ModInitializer {
 
 	public static Identifier id(String name) {
 		return new Identifier(MOD_ID, name);
-	}
-
-	public static DamageSource minecart(Entity entity) {
-		return new DamageSource(new Holder.Direct<>(new DamageType(MOD_ID + ".minecart", 1)), entity);
 	}
 }
