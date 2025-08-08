@@ -8,22 +8,22 @@ import commonnetwork.api.Network;
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaksConfig;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
+import dev.cammiescorner.cammiesminecarttweaks.common.blocks.CrossedRailBlock;
 import dev.cammiescorner.cammiesminecarttweaks.common.packets.ClientboundSyncChainedMinecartPacket;
 import dev.cammiescorner.cammiesminecarttweaks.common.utils.MinecartPhysicsAccess;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.enums.RailShape;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,7 +33,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+
+import static net.minecraft.util.math.Direction.*;
 
 @Mixin(AbstractMinecartEntity.class)
 public abstract class AbstractMinecartEntityMixin extends Entity implements Linkable, MinecartPhysicsAccess {
@@ -141,25 +145,63 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 //
 //			setVelocity(avgVelocity);
 
+			int velocity = MathHelper.ceil(getVelocity().horizontalLength());
+			Direction direction = Direction.getFacing(getVelocity().getX(), 0, getVelocity().getZ());
+			BlockPos minecartPos = getBlockPos();
+			Vec3i pain = new Vec3i(minecartPos.getX(), 0, minecartPos.getZ());
+			BlockPos.Mutable pos = new BlockPos.Mutable();
+			List<Vec3i> poses = new ArrayList<>();
+
+			poses.add(minecartPos);
+
+			for(Vec3i pose : poses) {
+				pos.set(pose);
+				int distance = pain.getManhattanDistance(new Vec3i(pos.getX(), 0, pos.getZ()));
+
+				if(distance > velocity)
+					break;
+
+				if(getWorld().getBlockState(pos.down()).isIn(BlockTags.RAILS))
+					pos.move(0, -1, 0);
+
+				BlockState state = getWorld().getBlockState(pos);
+
+				if(state.isIn(BlockTags.RAILS) && state.getBlock() instanceof CrossedRailBlock rails) {
+					RailShape shape = state.get(rails.getShapeProperty());
+
+					if(getVelocity().horizontalLength() > 0) {
+						if(shape == RailShape.NORTH_SOUTH && (direction == EAST || direction == WEST)) {
+							getWorld().setBlockState(pos, state.with(rails.getShapeProperty(), RailShape.EAST_WEST));
+							break;
+						}
+
+						if(shape == RailShape.EAST_WEST && (direction == Direction.NORTH || direction == SOUTH)) {
+							getWorld().setBlockState(pos, state.with(rails.getShapeProperty(), RailShape.NORTH_SOUTH));
+							break;
+						}
+					}
+				}
+			}
+
 			if(getLinkedParent() != null) {
 				double distance = getLinkedParent().distanceTo(this) - 1;
 
 				if(distance <= 4) {
-					Vec3d direction = getLinkedParent().getPos().subtract(getPos()).normalize();
+					Vec3d directionToParent = getLinkedParent().getPos().subtract(getPos()).normalize();
 
 					if(distance > 1) {
 						Vec3d parentVelocity = getLinkedParent().getVelocity();
 
 						if(parentVelocity.length() == 0) {
-							setVelocity(direction.multiply(0.05));
+							setVelocity(directionToParent.multiply(0.05));
 						}
 						else {
-							setVelocity(direction.multiply(parentVelocity.length()));
+							setVelocity(directionToParent.multiply(parentVelocity.length()));
 							setVelocity(getVelocity().multiply(distance));
 						}
 					}
 					else if(distance < 0.8)
-						setVelocity(direction.multiply(-0.05));
+						setVelocity(directionToParent.multiply(-0.05));
 					else
 						setVelocity(Vec3d.ZERO);
 				}
@@ -191,6 +233,7 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 			}
 		}
 		else {
+			// TODO doesnt appear to be working ;-;
 			if(MinecartTweaksConfig.playerViewIsLocked) {
 				Vec3d directionVec = getVelocity().normalize();
 
