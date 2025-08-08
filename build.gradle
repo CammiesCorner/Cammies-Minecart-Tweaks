@@ -26,6 +26,10 @@ repositories {
 		url = "https://maven.terraformersmc.com"
 	}
 	maven {
+		name = "Team Resourceful"
+		url = "https://maven.teamresourceful.com/repository/maven-public"
+	}
+	maven {
 		name = "Modrinth"
 		url = "https://api.modrinth.com/maven"
 		content {
@@ -41,7 +45,8 @@ dependencies {
 
 	modImplementation libs.fabric.api
 	modImplementation libs.modmenu
-	modImplementation libs.midnightlib
+	modImplementation libs.resourceful.config
+	modImplementation libs.common.network.fabric
 }
 
 processResources {

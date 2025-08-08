@@ -4,10 +4,11 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import commonnetwork.api.Network;
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
+import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaksConfig;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
-import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
-import dev.cammiescorner.cammiesminecarttweaks.common.packets.SyncChainedMinecartPacket;
+import dev.cammiescorner.cammiesminecarttweaks.common.packets.ClientboundSyncChainedMinecartPacket;
 import dev.cammiescorner.cammiesminecarttweaks.common.utils.MinecartPhysicsAccess;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.block.BlockState;
@@ -15,11 +16,9 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -34,18 +33,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Mixin(AbstractMinecartEntity.class)
 public abstract class AbstractMinecartEntityMixin extends Entity implements Linkable, MinecartPhysicsAccess {
-	@Unique private final List<AbstractMinecartEntity> connectedMinecarts = new ArrayList<>();
 	@Unique private @Nullable UUID parentUuid;
 	@Unique private @Nullable UUID childUuid;
 	@Unique private int parentIdClient;
 	@Unique private int childIdClient;
 	@Unique private boolean isMovingOnRail;
+
 
 	public AbstractMinecartEntityMixin(EntityType<?> type, World world) { super(type, world); }
 
@@ -119,10 +116,10 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 	}
 
 	@Inject(method = "updateTrackedPositionAndAngles", at = @At("HEAD"), cancellable = true)
-	private void minecarttweaks$setMinecartPosLikeOtherEntities(double x, double y, double z, float yaw, float pitch, int interpolationSteps, boolean interpolate, CallbackInfo info) {
+	private void minecarttweaks$setMinecartPosLikeOtherEntities(double x, double y, double z, float yaw, float pitch, int interpolationSteps, CallbackInfo ci) {
 		if(getWorld().isClient) {
-			super.updateTrackedPositionAndAngles(x, y, z, yaw, pitch, interpolationSteps, interpolate);
-			info.cancel();
+			super.updateTrackedPositionAndAngles(x, y, z, yaw, pitch, interpolationSteps);
+			ci.cancel();
 		}
 	}
 	/* === To Here === */
@@ -214,21 +211,12 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 		}
 	}
 
-	@Inject(method = "dropItems", at = @At("HEAD"))
-	private void minecarttweaks$dropChain(DamageSource damageSource, CallbackInfo info) {
-		if(getLinkedParent() != null || getLinkedChild() != null)
-			dropStack(new ItemStack(Items.CHAIN));
-	}
-
-	@Inject(method = "readCustomDataFromNbt", at = @At("HEAD"))
-	private void minecarttweaks$readNbt(NbtCompound nbt, CallbackInfo info) {
-
-	}
-
-	@Inject(method = "writeCustomDataToNbt", at = @At("HEAD"))
-	private void minecarttweaks$writeNbt(NbtCompound nbt, CallbackInfo info) {
-
-	}
+	// TODO move chain dropping logic
+//	@Inject(method = "dropItems", at = @At("HEAD"))
+//	private void minecarttweaks$dropChain(DamageSource damageSource, CallbackInfo info) {
+//		if(getLinkedParent() != null || getLinkedChild() != null)
+//			dropStack(new ItemStack(Items.CHAIN));
+//	}
 
 	@WrapOperation(method = "moveOnRail", at = @At(value = "INVOKE", target = "Ljava/lang/Math;min(DD)D"))
 	private double minecarttweaks$uncapSpeed(double garbo, double uncappedSpeed, Operation<Double> original) {
@@ -243,17 +231,17 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 	@Override
 	public void setLinkedParent(@Nullable AbstractMinecartEntity parent) {
-		if (parent != null) {
+		if(parent != null) {
 			this.parentUuid = parent.getUuid();
 			this.parentIdClient = parent.getId();
-		} else {
+		}
+		else {
 			this.parentUuid = null;
 			this.parentIdClient = -1;
 		}
 
-		if (!this.getWorld().isClient()) {
-			PlayerLookup.tracking(this).forEach(player -> SyncChainedMinecartPacket.send(this.getLinkedParent(), (AbstractMinecartEntity) (Object) this, player));
-		}
+		if(!this.getWorld().isClient())
+			PlayerLookup.tracking(this).forEach(player -> Network.getNetworkHandler().sendToClient(new ClientboundSyncChainedMinecartPacket(getLinkedParent() != null ? getLinkedParent().getId() : -1, getId()), player));
 	}
 
 	@Override
@@ -269,10 +257,11 @@ public abstract class AbstractMinecartEntityMixin extends Entity implements Link
 
 	@Override
 	public void setLinkedChild(@Nullable AbstractMinecartEntity child) {
-		if (child != null) {
+		if(child != null) {
 			this.childUuid = child.getUuid();
 			this.childIdClient = child.getId();
-		} else {
+		}
+		else {
 			this.childUuid = null;
 			this.childIdClient = -1;
 		}

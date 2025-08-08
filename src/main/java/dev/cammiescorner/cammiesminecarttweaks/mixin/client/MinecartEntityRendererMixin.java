@@ -13,7 +13,6 @@ import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -56,7 +55,7 @@ public abstract class MinecartEntityRendererMixin<T extends AbstractMinecartEnti
 	@Unique
 	public void renderChain(float x, float y, float z, float hAngle, float vAngle, MatrixStack stack, VertexConsumerProvider provider, int light) {
 		float squaredLength = x * x + y * y + z * z;
-		float length = MathHelper.sqrt(squaredLength) - 1F;
+		float length = MathHelper.sqrt(squaredLength) - 1f;
 
 		stack.push();
 		stack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-hAngle - 90));
@@ -65,22 +64,21 @@ public abstract class MinecartEntityRendererMixin<T extends AbstractMinecartEnti
 		stack.push();
 
 		VertexConsumer vertexConsumer = provider.getBuffer(CHAIN_LAYER);
-		float vertX1 = 0F;
-		float vertY1 = 0.25F;
-		float vertX2 = MathHelper.sin(6.2831855F) * 0.125F;
-		float vertY2 = MathHelper.cos(6.2831855F) * 0.125F;
-		float minU = 0F;
-		float maxU = 0.1875F;
-		float minV = 0F;
+		float vertX1 = 0f;
+		float vertY1 = 0.25f;
+		float vertX2 = MathHelper.sin(6.2831855f) * 0.125f;
+		float vertY2 = MathHelper.cos(6.2831855f) * 0.125f;
+		float minU = 0f;
+		float maxU = 0.1875f;
+		float minV = 0f;
 		float maxV = length / 10;
 		MatrixStack.Entry entry = stack.peek();
 		Matrix4f matrix4f = entry.getPositionMatrix();
-		Matrix3f matrix3f = entry.getNormalMatrix();
 
-		vertexConsumer.vertex(matrix4f, vertX1, vertY1, 0F).color(0, 0, 0, 255).texture(minU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX1, vertY1, length).color(255, 255, 255, 255).texture(minU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX2, vertY2, length).color(255, 255, 255, 255).texture(maxU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX2, vertY2, 0F).color(0, 0, 0, 255).texture(maxU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX1, vertY1, 0f).color(0, 0, 0, 255).texture(minU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(entry, 0f, -1f, 0f);
+		vertexConsumer.vertex(matrix4f, vertX1, vertY1, length).color(255, 255, 255, 255).texture(minU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(entry, 0f, -1f, 0f);
+		vertexConsumer.vertex(matrix4f, vertX2, vertY2, length).color(255, 255, 255, 255).texture(maxU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(entry, 0f, -1f, 0f);
+		vertexConsumer.vertex(matrix4f, vertX2, vertY2, 0f).color(0, 0, 0, 255).texture(maxU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(entry, 0f, -1f, 0f);
 
 		stack.pop();
 		stack.translate(0.19, 0.19, 0);
@@ -88,12 +86,11 @@ public abstract class MinecartEntityRendererMixin<T extends AbstractMinecartEnti
 
 		entry = stack.peek();
 		matrix4f = entry.getPositionMatrix();
-		matrix3f = entry.getNormalMatrix();
 
-		vertexConsumer.vertex(matrix4f, vertX1, vertY1, 0F).color(0, 0, 0, 255).texture(minU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX1, vertY1, length).color(255, 255, 255, 255).texture(minU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX2, vertY2, length).color(255, 255, 255, 255).texture(maxU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
-		vertexConsumer.vertex(matrix4f, vertX2, vertY2, 0F).color(0, 0, 0, 255).texture(maxU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(matrix3f, 0.0F, -1.0F, 0.0F).next();
+		vertexConsumer.vertex(matrix4f, vertX1, vertY1, 0f).color(0, 0, 0, 255).texture(minU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(entry, 0f, -1f, 0f);
+		vertexConsumer.vertex(matrix4f, vertX1, vertY1, length).color(255, 255, 255, 255).texture(minU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(entry, 0f, -1f, 0f);
+		vertexConsumer.vertex(matrix4f, vertX2, vertY2, length).color(255, 255, 255, 255).texture(maxU, maxV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(entry, 0f, -1f, 0f);
+		vertexConsumer.vertex(matrix4f, vertX2, vertY2, 0f).color(0, 0, 0, 255).texture(maxU, minV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(entry, 0f, -1f, 0f);
 
 		stack.pop();
 	}

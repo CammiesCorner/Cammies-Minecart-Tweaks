@@ -1,19 +1,23 @@
 package dev.cammiescorner.cammiesminecarttweaks;
 
+import com.teamresourceful.resourcefulconfig.api.loader.Configurator;
+import commonnetwork.api.Network;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import dev.cammiescorner.cammiesminecarttweaks.common.blocks.CrossedRailBlock;
-import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
-import eu.midnightdust.lib.config.MidnightConfig;
+import dev.cammiescorner.cammiesminecarttweaks.common.packets.ClientboundSyncChainedMinecartPacket;
+import dev.cammiescorner.cammiesminecarttweaks.common.utils.XtraCodecs;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageType;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.entity.vehicle.MinecartEntity;
 import net.minecraft.item.*;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -28,19 +32,25 @@ import net.minecraft.util.Identifier;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public class MinecartTweaks implements ModInitializer {
 	public static final String MOD_ID = "minecarttweaks";
-	public static final Block CROSSED_RAIL = new CrossedRailBlock();
+	public static final Block CROSSED_RAIL = new CrossedRailBlock(AbstractBlock.Settings.copy(Blocks.RAIL));
+	public static final ComponentType<UUID> PARENT_ID = ComponentType.<UUID>builder().codec(XtraCodecs.UUID_CODEC).packetCodec(XtraCodecs.UUID_PACKET_CODEC).build();
 	public static final RegistryKey<DamageType> MINECART_DAMAGE = RegistryKey.of(RegistryKeys.DAMAGE_TYPE, id("minecart"));
+	public static final Configurator CONFIGURATOR = new Configurator(MOD_ID);
 
 	@Override
 	public void onInitialize() {
-		MidnightConfig.init(MinecartTweaks.MOD_ID, MinecartTweaksConfig.class);
+		CONFIGURATOR.register(MinecartTweaksConfig.class);
 
 		Registry.register(Registries.BLOCK, id("crossed_rail"), CROSSED_RAIL);
 		Registry.register(Registries.ITEM, id("crossed_rail"), new BlockItem(CROSSED_RAIL, new Item.Settings()));
+		Registry.register(Registries.DATA_COMPONENT_TYPE, id("parent_id"), PARENT_ID);
 		ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register(entries -> entries.add(CROSSED_RAIL));
+
+		Network.registerPacket(ClientboundSyncChainedMinecartPacket.TYPE, ClientboundSyncChainedMinecartPacket.class, ClientboundSyncChainedMinecartPacket.CODEC, ClientboundSyncChainedMinecartPacket::handle);
 
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 			if(entity instanceof MinecartEntity ridableCart && ridableCart.getMinecartType() == AbstractMinecartEntity.Type.RIDEABLE) {
@@ -59,8 +69,9 @@ public class MinecartTweaks implements ModInitializer {
 				if(item == Items.HOPPER)
 					type = AbstractMinecartEntity.Type.HOPPER;
 
-				if(type != AbstractMinecartEntity.Type.RIDEABLE) {
-					AbstractMinecartEntity minecart = AbstractMinecartEntity.create(world, ridableCart.getX(), ridableCart.getY(), ridableCart.getZ(), type);
+				if(type != AbstractMinecartEntity.Type.RIDEABLE && world instanceof ServerWorld serverWorld) {
+					AbstractMinecartEntity minecart = AbstractMinecartEntity.create(serverWorld, ridableCart.getX(), ridableCart.getY(), ridableCart.getZ(), type, stack, player);
+					minecart.copyPositionAndRotation(ridableCart);
 					world.spawnEntity(minecart);
 
 					if(parent != null) {
@@ -90,10 +101,10 @@ public class MinecartTweaks implements ModInitializer {
 
 				if(player.isSneaking() && stack.isOf(Items.CHAIN)) {
 					if(world instanceof ServerWorld server) {
-						NbtCompound nbt = stack.getOrCreateNbt();
+						UUID uuid = stack.get(PARENT_ID);
 
-						if(nbt.contains("ParentEntity") && !cart.getUuid().equals(nbt.getUuid("ParentEntity"))) {
-							if(server.getEntity(nbt.getUuid("ParentEntity")) instanceof AbstractMinecartEntity parent) {
+						if(uuid != null && !cart.getUuid().equals(uuid)) {
+							if(server.getEntity(uuid) instanceof AbstractMinecartEntity parent) {
 								Set<Linkable> train = new HashSet<>();
 								train.add(parent);
 
@@ -113,25 +124,19 @@ public class MinecartTweaks implements ModInitializer {
 								}
 							}
 							else {
-								nbt.remove("ParentEntity");
-
-								if(nbt.isEmpty())
-									stack.setNbt(null);
+								stack.remove(PARENT_ID);
 							}
 
-							world.playSound(null, cart.getX(), cart.getY(), cart.getZ(), SoundEvents.BLOCK_CHAIN_PLACE, SoundCategory.NEUTRAL, 1F, 1F);
+							world.playSound(null, cart.getX(), cart.getY(), cart.getZ(), SoundEvents.BLOCK_CHAIN_PLACE, SoundCategory.NEUTRAL, 1f, 1f);
 
 							if(!player.isCreative())
 								stack.decrement(1);
 
-							nbt.remove("ParentEntity");
-
-							if(nbt.isEmpty())
-								stack.setNbt(null);
+							stack.remove(PARENT_ID);
 						}
 						else {
-							nbt.putUuid("ParentEntity", cart.getUuid());
-							world.playSound(null, cart.getX(), cart.getY(), cart.getZ(), SoundEvents.BLOCK_CHAIN_HIT, SoundCategory.NEUTRAL, 1F, 1F);
+							stack.set(PARENT_ID, cart.getUuid());
+							world.playSound(null, cart.getX(), cart.getY(), cart.getZ(), SoundEvents.BLOCK_CHAIN_HIT, SoundCategory.NEUTRAL, 1f, 1f);
 						}
 					}
 
@@ -144,6 +149,6 @@ public class MinecartTweaks implements ModInitializer {
 	}
 
 	public static Identifier id(String name) {
-		return new Identifier(MOD_ID, name);
+		return Identifier.of(MOD_ID, name);
 	}
 }

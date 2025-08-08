@@ -1,6 +1,6 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
-import dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksConfig;
+import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaksConfig;
 import net.minecraft.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.player.PlayerEntity;
@@ -28,9 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 @Mixin(FurnaceMinecartEntity.class)
 public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity {
@@ -45,7 +43,6 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 	@Unique private double altPushX;
 	@Unique private double altPushZ;
 	@Unique private static final Ingredient OLD_ACCEPTABLE_FUEL = ACCEPTABLE_FUEL;
-	@Unique private final Set<AbstractMinecartEntity> train = new HashSet<>();
 	@Unique private ChunkPos prevChunkPos;
 
 	protected FurnaceMinecartEntityMixin(EntityType<?> entityType, World world) { super(entityType, world); }
