@@ -21,18 +21,25 @@ public class MinecartTweaksConfig {
 
 	@ConfigEntry(id = "furnaceMinecartSpeed")
 	public static double furnaceMinecartSpeed = 20D;
+
 	@ConfigEntry(id = "otherMinecartSpeed")
 	public static double otherMinecartSpeed = 8D;
+
 	@ConfigEntry(id = "minecartDamage")
 	public static float minecartDamage = 20f;
+
 	@ConfigEntry(id = "furnaceMaxBurnTime")
 	public static int furnaceMaxBurnTime = 72000;
+
 	@ConfigEntry(id = "canLinkMinecarts")
 	public static boolean canLinkMinecarts = true;
+
 	@ConfigEntry(id = "shouldPoweredRailsStopFurnace")
 	public static boolean shouldPoweredRailsStopFurnace = true;
+
 	@ConfigEntry(id = "furnacesCanUseAllFuels")
 	public static boolean furnacesCanUseAllFuels = true;
+
 	@ConfigEntry(id = "furnaceMinecartsLoadChunks")
 	public static boolean furnaceMinecartsLoadChunks = false;
 
