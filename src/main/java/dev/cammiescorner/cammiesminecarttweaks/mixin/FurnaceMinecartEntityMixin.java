@@ -32,16 +32,13 @@ import java.util.Map;
 
 @Mixin(FurnaceMinecartEntity.class)
 public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity {
-	@Shadow protected abstract boolean isLit();
+	@Shadow public abstract boolean isLit();
 	@Shadow private int fuel;
 	@Shadow public double pushX;
 	@Shadow public double pushZ;
 	@Shadow @Final @Mutable private static Ingredient ACCEPTABLE_FUEL;
 	@Shadow public abstract ActionResult interact(PlayerEntity player, Hand hand);
 
-	@Unique private int altFuel;
-	@Unique private double altPushX;
-	@Unique private double altPushZ;
 	@Unique private static final Ingredient OLD_ACCEPTABLE_FUEL = ACCEPTABLE_FUEL;
 	@Unique private ChunkPos prevChunkPos;
 
@@ -139,9 +136,6 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 	@Inject(method = "readCustomDataFromNbt", at = @At("TAIL"))
 	public void minecarttweaks$readNbt(NbtCompound nbt, CallbackInfo info) {
 		fuel = nbt.getInt("RealFuel");
-		altFuel = nbt.getInt("AltFuel");
-		altPushX = nbt.getDouble("AltPushX");
-		altPushZ = nbt.getDouble("AltPushZ");
 		prevChunkPos = new ChunkPos(nbt.getLong("PrevChunkPos"));
 	}
 
@@ -151,9 +145,6 @@ public abstract class FurnaceMinecartEntityMixin extends AbstractMinecartEntity 
 			nbt.putShort("Fuel", Short.MAX_VALUE);
 
 		nbt.putInt("RealFuel", fuel);
-		nbt.putInt("AltFuel", altFuel);
-		nbt.putDouble("AltPushX", altPushX);
-		nbt.putDouble("AltPushZ", altPushZ);
 		nbt.putLong("PrevChunkPos", prevChunkPos.toLong());
 	}
 }

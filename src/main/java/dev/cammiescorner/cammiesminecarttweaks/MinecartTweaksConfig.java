@@ -34,9 +34,6 @@ public class MinecartTweaksConfig {
 	@ConfigEntry(id = "canLinkMinecarts")
 	public static boolean canLinkMinecarts = true;
 
-	@ConfigEntry(id = "shouldPoweredRailsStopFurnace")
-	public static boolean shouldPoweredRailsStopFurnace = true;
-
 	@ConfigEntry(id = "furnacesCanUseAllFuels")
 	public static boolean furnacesCanUseAllFuels = true;
 
