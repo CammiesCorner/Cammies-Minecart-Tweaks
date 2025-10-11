@@ -1,11 +1,5 @@
 # **Cammie's Minecart Tweaks**
 
-<p align="center">
-    <a href="https://modrinth.com/mod/qsl"><img src="https://raw.githubusercontent.com/intergrav/devins-badges/v3/assets/cozy/requires/quilt-standard-libraries_64h.png" width="311" height="64" title="Quilt Standard Libraries" alt="Quilt Standard Libraries"></a>
-</p>
-
----
-
 Cammie's Minecart Tweaks is a mod that makes Minecarts a more viable solution for long-distance transport.
 
 Minecarts can't compete with the speed of an Elytra or Ice Boat, but now, by using Furnace Minecarts, you can get to a higher top speed than is obtainable by Powered Rails.
