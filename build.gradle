@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.9-SNAPSHOT'
+	id 'fabric-loom' version '1.12.0-alpha.38'
 	id 'maven-publish'
 }
 
@@ -29,11 +29,15 @@ repositories {
 		name = "Team Resourceful"
 		url = "https://maven.teamresourceful.com/repository/maven-public"
 	}
-	maven {
-		name = "Modrinth"
-		url = "https://api.modrinth.com/maven"
-		content {
-			includeGroup "maven.modrinth"
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "Modrinth"
+				url = "https://api.modrinth.com/maven"
+			}
+		}
+		filter {
+			includeGroup("maven.modrinth")
 		}
 	}
 }

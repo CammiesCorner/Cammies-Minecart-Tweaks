@@ -1,12 +1,12 @@
 [versions]
 minecraft = "1.21.1"
 yarn_mappings = "1.21.1+build.3"
-fabric_loader = "0.16.14"
+fabric_loader = "0.17.3"
 
-fabric_api = "0.116.4+1.21.1"
+fabric_api = "0.116.7+1.21.1"
 modmenu = "11.0.3"
 resourceful_config = "3.0.11"
-common_network = "1.0.18-1.21.1"
+common_network = "1.0.21-1.21.1"
 
 [libraries]
 minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
