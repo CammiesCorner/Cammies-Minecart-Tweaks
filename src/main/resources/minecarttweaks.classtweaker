@@ -1,0 +1,11 @@
+classTweaker v2 named
+
+accessible field net/minecraft/world/entity/vehicle/AbstractMinecart EXITS Ljava/util/Map;
+accessible method net/minecraft/world/entity/vehicle/AbstractMinecart getMaxSpeed ()D
+accessible method net/minecraft/world/entity/vehicle/AbstractMinecart exits (Lnet/minecraft/world/level/block/state/properties/RailShape;)Lcom/mojang/datafixers/util/Pair;
+accessible method net/minecraft/world/entity/vehicle/MinecartFurnace hasFuel ()Z
+#
+inject-interface net/minecraft/world/entity/vehicle/AbstractMinecart dev/cammiescorner/cammiesminecarttweaks/util/ext/MinecartPhysicsAccess
+transitive-inject-interface net/minecraft/world/entity/vehicle/AbstractMinecart dev/cammiescorner/cammiesminecarttweaks/api/Linkable
+
+accessible method net/minecraft/world/item/BucketItem playEmptySound (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;)V

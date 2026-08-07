@@ -1,29 +1,35 @@
 package dev.cammiescorner.cammiesminecarttweaks.client;
 
-import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks;
+import com.google.auto.service.AutoService;
 import dev.cammiescorner.cammiesminecarttweaks.MinecartTweaksConfig;
-import net.fabricmc.api.ClientModInitializer;
+import dev.cammiescorner.cammiesminecarttweaks.init.MTBlocks;
+import dev.upcraft.sparkweave.api.entrypoint.ClientEntryPoint;
+import dev.upcraft.sparkweave.api.platform.ModContainer;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.entity.vehicle.FurnaceMinecartEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.vehicle.MinecartFurnace;
+import net.minecraft.world.item.ItemStack;
 
-public class MinecartTweaksClient implements ClientModInitializer {
+@AutoService(ClientEntryPoint.class)
+public class MinecartTweaksClient implements ClientEntryPoint {
+
 	@Override
-	public void onInitializeClient() {
-		BlockRenderLayerMap.INSTANCE.putBlock(MinecartTweaks.CROSSED_RAIL, RenderLayer.getCutout());
+	public void onInitializeClient(ModContainer mod) {
+		BlockRenderLayerMap.INSTANCE.putBlock(MTBlocks.CROSSED_RAIL.get(), RenderType.cutout());
 
 		// TODO render chain back to player if they're currently linking a minecart, maybe make the cart glow too
 
-		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-			ItemStack stack = player.getStackInHand(hand);
+		UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
+			if(entity instanceof MinecartFurnace && MinecartTweaksConfig.dontEatEnchantedItems) {
+				ItemStack stack = player.getItemInHand(hand);
+				if(stack.isEnchanted()) {
+					return InteractionResult.CONSUME;
+				}
+			}
 
-			if(world.isClient() && entity instanceof FurnaceMinecartEntity && MinecartTweaksConfig.dontEatEnchantedItems && stack.hasEnchantments())
-				return ActionResult.CONSUME;
-
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		});
 	}
 }

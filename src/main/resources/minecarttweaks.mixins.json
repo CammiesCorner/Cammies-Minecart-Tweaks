@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.cammiescorner.cammiesminecarttweaks.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "AbstractMinecartMixin",
+    "BaseRailBlockMixin",
+    "ServerEntityMixin",
+    "MinecartFurnaceMixin",
+    "MinecartItemMixin",
+    "AbstractMinecartContainerMixin"
+  ],
+  "client": [
+    "client.MinecartRendererMixin",
+    "client.SplashManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+	}
+}

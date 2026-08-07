@@ -1,50 +1,72 @@
 {
   "schemaVersion": 1,
-  "id": "minecarttweaks",
+  "id": "${mod_id}",
   "version": "${version}",
-  "name": "Cammies Minecart Tweaks",
-  "description": "Making Minecarts more viable for transportation",
+  "name": "${mod_display_name}",
+  "description": "${mod_description}",
   "authors": [
-    "Cammie",
-    "Up"
+    {
+      "name": "Cammie",
+      "contact": {
+        "homepage": "https://cammiescorner.dev",
+        "github": "https://github.com/CammiePone",
+        "bsky": "https://bsky.app/profile/did:plc:mrfyoh5nqmmuztcsmklcihfv",
+        "curseforge": "https://www.curseforge.com/members/cammie",
+        "modrinth": "https://modrinth.com/user/Cammie"
+      }
+    },
+    {
+      "name": "Up",
+      "contact": {
+        "homepage": "https://upcraft.dev",
+        "github": "https://github.com/UpcraftLP",
+        "bsky": "https://bsky.app/profile/did:plc:77uzn2lx2zhtdgr5zfvzumji",
+        "curseforge": "https://www.curseforge.com/members/upcraftlp",
+        "modrinth": "https://modrinth.com/user/Up"
+      }
+    }
   ],
   "contact": {
-    "homepage": "https://cammiescorner.dev",
-    "issues": "https://github.com/CammiesCorner/Cammies-Minecart-Tweaks/issues",
-    "sources": "https://github.com/CammiesCorner/Cammies-Minecart-Tweaks"
+    "homepage": "${homepage_url}",
+    "issues": "${issues_url}",
+    "sources": "${sources_url}"
   },
-  "license": "Custom License",
-  "icon": "assets/minecarttweaks/icon.png",
-  "environment": "*",
-  "entrypoints": {
-    "main": [
-      "dev.cammiescorner.cammiesminecarttweaks.MinecartTweaks"
-    ],
-    "client": [
-      "dev.cammiescorner.cammiesminecarttweaks.client.MinecartTweaksClient"
-    ],
-    "modmenu": [
-      "dev.cammiescorner.cammiesminecarttweaks.common.compat.MinecartTweaksModMenu"
-    ]
-  },
+  "license": "${license_url}",
+  "icon": "icon.png",
   "custom": {
-    "loom:injected_interfaces": {
-      "net/minecraft/class_1688": [
-        "dev/cammiescorner/cammiesminecarttweaks/api/Linkable",
-        "dev/cammiescorner/cammiesminecarttweaks/common/utils/MinecartPhysicsAccess"
+    "mc-publish": {
+      "curseforge": "${curseforge_id}",
+      "modrinth": "${modrinth_id}",
+      "dependencies": [
+        "fabric-api(required){curseforge:306612}{modrinth:P7dR8mSH}",
+        "commonnetworking(required){curseforge:806044}{modrinth:HIuqnQpi}",
+        "resourcefulconfig(required){curseforge:714059}{modrinth:M1953qlQ}",
+        "sparkweave(required){curseforge:911456}{modrinth:nf68xfAw}",
+        "modmenu(optional){curseforge:308702}{modrinth:mOgUt4GM}"
+      ],
+      "loaders": [
+        "fabric",
+        "quilt"
       ]
+    },
+    "modmenu": {
+      "links": {
+        "modmenu.discord": "${discord_url}"
+      }
     }
   },
-  "mixins": [
-    "minecart-tweaks.mixins.json"
-  ],
-  "access_widener": "minecart-tweaks.accesswidener",
   "depends": {
-    "fabricloader": ">=0.16.9",
-    "minecraft": "~1.21.1",
-    "java": ">=21",
+    "fabricloader": ">=${fabric_loader_version}",
+    "minecraft": "=${minecraft_version}",
+    "java": ">=${java_version}",
     "fabric-api": "*",
     "commonnetworking": "*",
-    "resourcefulconfig": "*"
-  }
+    "resourcefulconfig": "*",
+    "sparkweave": "*"
+  },
+  "environment": "*",
+  "accessWidener": "${mod_id}.classtweaker",
+  "mixins": [
+    "${mod_id}.mixins.json"
+  ]
 }
