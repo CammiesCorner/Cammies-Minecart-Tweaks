@@ -1,22 +1,60 @@
 [versions]
 minecraft = "1.21.1"
-yarn_mappings = "1.21.1+build.3"
-fabric_loader = "0.17.3"
+java = "21"
 
-fabric_api = "0.116.7+1.21.1"
+# https://parchmentmc.org/docs/getting-started
+parchment_minecraft = "1.21.1"
+parchment_mappings = "2024.11.17"
+
+# Fabric
+# https://fabricmc.net/develop
+fabric_loom = "1.17.18" # https://maven.fabricmc.net/net/fabricmc/fabric-loom-remap/net.fabricmc.fabric-loom-remap.gradle.plugin/
+fabric_loader = "0.19.3"
+fabric_api = "0.116.15+1.21.1"
+
+# https://maven.covers1624.net/service/rest/repository/browse/maven-hosted/net/covers1624/DevLogin/
+devlogin = "0.1.0.5"
+idea_ext = "1.4.1"
+
+# Other dependencies
+autoservice = "1.1.1"
+jspecify = "1.0.1"
+jetbrains_annotations = "26.1.0"
+
+# https://modrinth.com/plugin/common-network/versions
+commonnetwork = "1.0.21-1.21.1"
+# https://modrinth.com/mod/modmenu/versions
 modmenu = "11.0.3"
-resourceful_config = "3.0.11"
-common_network = "1.0.21-1.21.1"
+# https://beehive.sh/mod/resourcefulconfig/versions
+resourcefulconfig = "3.0.11"
+# https://modrinth.com/mod/sparkweave/versions
+sparkweave = "0.510.0"
 
 [libraries]
-minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
-yarn_mappings = { module = "net.fabricmc:yarn", version.ref = "yarn_mappings" }
+# Fabric
 fabric_loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric_loader" }
-
 fabric_api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric_api" }
-modmenu = { module = "com.terraformersmc:modmenu", version.ref = "modmenu" }
-resourceful_config = { module = "com.teamresourceful.resourcefulconfig:resourcefulconfig-fabric-1.21", version.ref = "resourceful_config" }
-common_network_fabric = { module = "mysticdrew:common-networking-fabric", version.ref = "common_network" }
+devlogin = { module = "net.covers1624:DevLogin", version.ref = "devlogin" }
 
-# If you have multiple similar dependencies, you can declare a dependency bundle and reference it on the build script with "libs.bundles.example".
-[bundles]
+# Minecraft dependencies
+minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
+jetbrains_annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains_annotations" }
+
+# Other dependencies
+autoservice = { module = "com.google.auto.service:auto-service", version.ref = "autoservice" }
+autoservice_annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "autoservice" }
+jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
+
+# Mods
+commonnetwork_fabric = { module = "mysticdrew:common-networking-fabric", version.ref = "commonnetwork" }
+
+modmenu_fabric = { module = "com.terraformersmc:modmenu", version.ref = "modmenu" }
+
+resourcefulconfig_fabric = { module = "com.teamresourceful.resourcefulconfig:resourcefulconfig-fabric-1.21", version.ref = "resourcefulconfig" }
+
+sparkweave_fabric = { module = "dev.upcraft.sparkweave:Sparkweave-Fabric", version.ref = "sparkweave" }
+
+[plugins]
+fabric_loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric_loom" }
+fabric_loom_remap = { id = "net.fabricmc.fabric-loom-remap", version.ref = "fabric_loom" }
+idea_ext = { id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "idea_ext" }
