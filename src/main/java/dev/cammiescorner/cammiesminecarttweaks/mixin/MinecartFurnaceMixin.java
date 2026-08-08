@@ -33,7 +33,7 @@ public abstract class MinecartFurnaceMixin extends AbstractMinecart {
 	@Shadow @Final @Mutable private static Ingredient INGREDIENT;
 
 	@Shadow
-	protected abstract boolean hasFuel();
+	public abstract boolean hasFuel();
 
 	@Shadow
 	public double xPush;

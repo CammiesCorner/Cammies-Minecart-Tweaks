@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AbstractMinecartContainer.class)
-public class AbstractMinecartContainerMixin {
+public abstract class AbstractMinecartContainerMixin {
 	@Inject(method = "interact", at = @At("HEAD"), cancellable = true)
 	public void minecarttweaks$heckUMojang(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> info) {
 		if(MinecartTweaksConfig.canLinkMinecarts) {

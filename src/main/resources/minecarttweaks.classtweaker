@@ -4,7 +4,9 @@ accessible field net/minecraft/world/entity/vehicle/AbstractMinecart EXITS Ljava
 accessible method net/minecraft/world/entity/vehicle/AbstractMinecart getMaxSpeed ()D
 accessible method net/minecraft/world/entity/vehicle/AbstractMinecart exits (Lnet/minecraft/world/level/block/state/properties/RailShape;)Lcom/mojang/datafixers/util/Pair;
 accessible method net/minecraft/world/entity/vehicle/MinecartFurnace hasFuel ()Z
-#
+
+inject-interface net/minecraft/world/item/MinecartItem dev/cammiescorner/cammiesminecarttweaks/util/ext/MinecartItemExt
+
 inject-interface net/minecraft/world/entity/vehicle/AbstractMinecart dev/cammiescorner/cammiesminecarttweaks/util/ext/MinecartPhysicsAccess
 transitive-inject-interface net/minecraft/world/entity/vehicle/AbstractMinecart dev/cammiescorner/cammiesminecarttweaks/api/Linkable
 

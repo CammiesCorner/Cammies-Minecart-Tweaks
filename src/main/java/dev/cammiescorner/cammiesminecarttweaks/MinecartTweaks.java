@@ -1,80 +1,63 @@
 package dev.cammiescorner.cammiesminecarttweaks;
 
+import com.google.auto.service.AutoService;
 import com.teamresourceful.resourcefulconfig.api.loader.Configurator;
 import commonnetwork.api.Network;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import dev.cammiescorner.cammiesminecarttweaks.init.MTBlocks;
 import dev.cammiescorner.cammiesminecarttweaks.init.MTDataComponents;
 import dev.cammiescorner.cammiesminecarttweaks.packets.ClientboundSyncChainedMinecartPacket;
+import dev.cammiescorner.cammiesminecarttweaks.util.MinecartHelper;
+import dev.upcraft.sparkweave.api.entrypoint.MainEntryPoint;
 import dev.upcraft.sparkweave.api.item.CreativeTabHelper;
-import net.fabricmc.api.ModInitializer;
+import dev.upcraft.sparkweave.api.platform.ModContainer;
+import dev.upcraft.sparkweave.api.platform.services.RegistryService;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
-import net.minecraft.world.entity.vehicle.Minecart;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class MinecartTweaks implements ModInitializer {
+@AutoService(MainEntryPoint.class)
+public class MinecartTweaks implements MainEntryPoint {
 	public static final String MOD_ID = "minecarttweaks";
 	private static final Configurator CONFIGURATOR = new Configurator(MOD_ID);
 
 	@Override
-	public void onInitialize() {
+	public void onInitialize(ModContainer mod) {
 		CONFIGURATOR.register(MinecartTweaksConfig.class);
+
+		var registryService = RegistryService.get();
+		MTBlocks.BLOCKS.accept(registryService);
+		MTDataComponents.DATA_COMPONENTS.accept(registryService);
 
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.REDSTONE_BLOCKS).register(entries -> CreativeTabHelper.addRegistryEntries(entries.getContext(), entries, MTBlocks.BLOCKS));
 
 		Network.registerPacket(ClientboundSyncChainedMinecartPacket.TYPE, ClientboundSyncChainedMinecartPacket.class, ClientboundSyncChainedMinecartPacket.CODEC, ClientboundSyncChainedMinecartPacket::handle);
 
 		UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
-			if(entity instanceof Minecart ridableCart && ridableCart.getMinecartType() == AbstractMinecart.Type.RIDEABLE) {
-				var parent = ridableCart.getLinkedParent();
-				var child = ridableCart.getLinkedChild();
-				var stack = player.getItemInHand(hand);
-				var item = stack.getItem();
-				var type = AbstractMinecart.Type.RIDEABLE;
+			if(player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer && level instanceof ServerLevel serverLevel && entity instanceof AbstractMinecart minecart) {
+				//TODO check chain
+				var heldItem = player.getItemInHand(hand);
+				if(heldItem.is(Items.CHAIN)) {
+					// TODO connect
+				}
 
-				if(item == Items.FURNACE)
-					type = AbstractMinecart.Type.FURNACE;
-				if(item == Items.CHEST)
-					type = AbstractMinecart.Type.CHEST;
-				if(item == Items.TNT)
-					type = AbstractMinecart.Type.TNT;
-				if(item == Items.HOPPER)
-					type = AbstractMinecart.Type.HOPPER;
-
-				if(type != AbstractMinecart.Type.RIDEABLE && level instanceof ServerLevel serverLevel) {
-					var minecart = AbstractMinecart.createMinecart(serverLevel, ridableCart.getX(), ridableCart.getY(), ridableCart.getZ(), type, stack, player);
-					minecart.copyPosition(ridableCart);
-					level.addFreshEntity(minecart);
-
-					if(parent != null) {
-						Linkable.unsetParentChild(parent, ridableCart);
-						Linkable.setParentChild(parent, minecart);
-					}
-					if(child != null) {
-						Linkable.unsetParentChild(ridableCart, child);
-						Linkable.setParentChild(minecart, child);
-					}
-
-					ridableCart.remove(Entity.RemovalReason.DISCARDED);
-
-					if(!player.isCreative())
-						stack.shrink(1);
-
-					return InteractionResult.sidedSuccess(level.isClientSide());
+				if(MinecartHelper.tryUpgradeMinecart(serverPlayer, serverLevel, hand, minecart)) {
+					return InteractionResult.SUCCESS;
 				}
 			}
 

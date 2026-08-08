@@ -1,19 +1,31 @@
 package dev.cammiescorner.cammiesminecarttweaks.util;
 
 import com.google.common.collect.Maps;
+import dev.cammiescorner.cammiesminecarttweaks.api.InWorldMinecartCraftingEvent;
+import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MinecartItem;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -79,5 +91,121 @@ public class MinecartHelper {
 		}
 
 		return railCollisionShape;
+	}
+
+	public static boolean tryUpgradeMinecart(ServerPlayer player, ServerLevel level, InteractionHand hand, AbstractMinecart originalMinecart) {
+		if(!originalMinecart.isAlive()) {
+			return false;
+		}
+
+		var itemStack = player.getItemInHand(hand);
+		var originalStack = originalMinecart.getPickResult();
+		var craftingInput = CraftingInput.of(2, 1, List.of(itemStack, originalStack));
+
+		var resultStack = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftingInput, level).map(recipe -> recipe.value().assemble(craftingInput, level.registryAccess())).orElse(ItemStack.EMPTY);
+
+		Entity entity;
+		if(resultStack.getItem() instanceof MinecartItem minecartItem) {
+			entity = AbstractMinecart.createMinecart(level, originalMinecart.getX(), originalMinecart.getY(), originalMinecart.getZ(), minecartItem.minecarttweaks$getType(), resultStack, player);
+		} else {
+			entity = null;
+		}
+
+		var ctx = new InWorldMinecartCraftingEvent.Context() {
+			private Entity resultEntity = entity;
+
+			@Override
+			public ServerPlayer getPlayer() {
+				return player;
+			}
+
+			@Override
+			public InteractionHand getHand() {
+				return hand;
+			}
+
+			@Override
+			public ItemStack getItemStack() {
+				return itemStack;
+			}
+
+			@Override
+			public ServerLevel getLevel() {
+				return level;
+			}
+
+			@Override
+			public AbstractMinecart getOriginalEntity() {
+				return originalMinecart;
+			}
+
+			@Override
+			public @Nullable Entity getResultEntity() {
+				return resultEntity;
+			}
+
+			@Override
+			public void setResultEntity(@Nullable Entity entity) {
+				resultEntity = entity;
+			}
+		};
+		if(InWorldMinecartCraftingEvent.EVENT.invoker().tryUpgradeMinecart(ctx)) {
+			var resultEntity = ctx.getResultEntity();
+			if(resultEntity == null) {
+				return false;
+			}
+
+			if(originalMinecart.isVehicle()) {
+				originalMinecart.ejectPassengers();
+			}
+
+			resultEntity.copyPosition(originalMinecart);
+
+			var parent = originalMinecart.getLinkedParent();
+			var child = originalMinecart.getLinkedChild();
+
+			if(parent != null) {
+				Linkable.unsetParentChild(parent, originalMinecart);
+			}
+			if(child != null) {
+				Linkable.unsetParentChild(originalMinecart, child);
+			}
+
+			originalMinecart.remove(Entity.RemovalReason.DISCARDED);
+			level.addFreshEntity(resultEntity);
+
+			if(resultEntity instanceof Linkable linkableEntity) {
+				if(parent != null) {
+					Linkable.setParentChild(parent, linkableEntity);
+				}
+				if(child != null) {
+					Linkable.setParentChild(linkableEntity, child);
+				}
+			}
+			else {
+				// not linkable, drop connection chains
+
+				var count = 0;
+				if(parent != null) {
+					count++;
+				}
+				if(child != null) {
+					count++;
+				}
+
+				var stack = new ItemStack(Items.CHAIN, count);
+				resultEntity.spawnAtLocation(stack, resultEntity.getBbHeight());
+			}
+
+			if(!player.isCreative()) {
+				itemStack.shrink(1);
+			}
+			player.setItemInHand(hand, itemStack);
+			player.swing(hand, true);
+
+			return true;
+		}
+
+		return false;
 	}
 }
