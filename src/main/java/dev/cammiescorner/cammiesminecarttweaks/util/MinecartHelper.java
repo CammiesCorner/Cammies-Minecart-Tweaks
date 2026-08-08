@@ -3,15 +3,20 @@ package dev.cammiescorner.cammiesminecarttweaks.util;
 import com.google.common.collect.Maps;
 import dev.cammiescorner.cammiesminecarttweaks.api.InWorldMinecartCraftingEvent;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
+import dev.cammiescorner.cammiesminecarttweaks.init.MTDataComponents;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -25,9 +30,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class MinecartHelper {
 	public static final VoxelShape WALL_SHAPE = Shapes.box(0.48, 0.5, 0.48, 0.52, 1.2, 0.52);
@@ -93,14 +96,13 @@ public class MinecartHelper {
 		return railCollisionShape;
 	}
 
-	public static boolean tryUpgradeMinecart(ServerPlayer player, ServerLevel level, InteractionHand hand, AbstractMinecart originalMinecart) {
+	public static boolean tryUpgradeMinecart(ServerPlayer player, ServerLevel level, InteractionHand hand, AbstractMinecart originalMinecart, ItemStack heldItem) {
 		if(!originalMinecart.isAlive()) {
 			return false;
 		}
 
-		var itemStack = player.getItemInHand(hand);
 		var originalStack = originalMinecart.getPickResult();
-		var craftingInput = CraftingInput.of(2, 1, List.of(itemStack, originalStack));
+		var craftingInput = CraftingInput.of(2, 1, List.of(heldItem, originalStack));
 
 		var resultStack = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, craftingInput, level).map(recipe -> recipe.value().assemble(craftingInput, level.registryAccess())).orElse(ItemStack.EMPTY);
 
@@ -126,7 +128,7 @@ public class MinecartHelper {
 
 			@Override
 			public ItemStack getItemStack() {
-				return itemStack;
+				return heldItem;
 			}
 
 			@Override
@@ -198,14 +200,65 @@ public class MinecartHelper {
 			}
 
 			if(!player.isCreative()) {
-				itemStack.shrink(1);
+				heldItem.shrink(1);
 			}
-			player.setItemInHand(hand, itemStack);
-			player.swing(hand, true);
-
+			player.setItemInHand(hand, heldItem);
 			return true;
 		}
 
 		return false;
+	}
+
+	public static boolean tryLinkMinecart(Player player, ServerLevel serverLevel, InteractionHand hand, AbstractMinecart minecart, ItemStack heldItem) {
+		if (!heldItem.is(Items.CHAIN)) {
+			return false;
+		}
+
+		UUID uuid = heldItem.get(MTDataComponents.PARENT_ID.get());
+		if(uuid != null) {
+			heldItem.remove(MTDataComponents.PARENT_ID.get());
+
+			if (!minecart.getUUID().equals(uuid) && serverLevel.getEntity(uuid) instanceof Linkable parent) {
+				if (parent.getLinkedChild() != null) {
+					// TODO better error message: parent cart already has a linked child
+					player.displayClientMessage(Component.translatable("minecarttweaks.cant_link_to_engine").withStyle(ChatFormatting.RED), true);
+					minecart.playSound(SoundEvents.CHAIN_BREAK);
+					player.setItemInHand(hand, heldItem);
+					return true;
+				}
+
+				// check for circles; we need only check the parents since the source cart already cannot have a child
+				Set<Linkable> train = new HashSet<>();
+				train.add(minecart);
+				train.add(parent);
+
+				Linkable tmp;
+				while ((tmp = parent.getLinkedParent()) != null) {
+					if (!train.add(tmp)) {
+						// TODO better error message: cart already in train
+						player.displayClientMessage(Component.translatable("minecarttweaks.cant_link_to_engine").withStyle(ChatFormatting.RED), true);
+						minecart.playSound(SoundEvents.CHAIN_BREAK);
+						player.setItemInHand(hand, heldItem);
+						return true;
+					}
+				}
+
+				Linkable oldParent = minecart.getLinkedParent();
+				if (oldParent != null) {
+					Linkable.unsetParentChild(oldParent, minecart);
+				}
+
+				Linkable.setParentChild(parent, minecart);
+
+				if (!player.isCreative()) {
+					heldItem.shrink(1);
+				}
+				minecart.playSound(SoundEvents.CHAIN_PLACE);
+			} else {
+				minecart.playSound(SoundEvents.CHAIN_BREAK);
+			}
+		}
+
+		return true;
 	}
 }
