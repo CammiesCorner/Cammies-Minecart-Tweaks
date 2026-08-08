@@ -23,7 +23,6 @@ public abstract class BaseRailBlockMixin extends Block {
 		throw new UnsupportedOperationException();
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
 		VoxelShape railCollisionShape = super.getCollisionShape(state, level, pos, context);
