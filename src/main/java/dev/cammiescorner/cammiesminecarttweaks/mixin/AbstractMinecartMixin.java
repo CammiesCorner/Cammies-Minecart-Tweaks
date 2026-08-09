@@ -1,6 +1,7 @@
 package dev.cammiescorner.cammiesminecarttweaks.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -11,11 +12,11 @@ import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
 import dev.cammiescorner.cammiesminecarttweaks.blocks.CrossedRailBlock;
 import dev.cammiescorner.cammiesminecarttweaks.data.MTDamageTypes;
 import dev.cammiescorner.cammiesminecarttweaks.packets.ClientboundSyncChainedMinecartPacket;
+import dev.cammiescorner.cammiesminecarttweaks.util.MinecartVelocityHelper;
 import dev.cammiescorner.cammiesminecarttweaks.util.ext.MinecartPhysicsAccess;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
@@ -25,6 +26,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.PoweredRailBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.phys.Vec3;
@@ -36,16 +39,16 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Mixin(AbstractMinecart.class)
 public abstract class AbstractMinecartMixin extends Entity implements Linkable, MinecartPhysicsAccess {
 	@Shadow
 	public abstract boolean canCollideWith(Entity entity);
+
+	@Shadow
+	public abstract AbstractMinecart.Type getMinecartType();
 
 	@Unique private @Nullable UUID parentUuid;
 	@Unique private @Nullable UUID childUuid;
@@ -59,29 +62,6 @@ public abstract class AbstractMinecartMixin extends Entity implements Linkable, 
 		throw new UnsupportedOperationException();
 	}
 
-	/*	MIT License
-
-		Copyright (c) 2022 2No2Name, Inspector Talon
-
-		Permission is hereby granted, free of charge, to any person obtaining a copy
-		of this software and associated documentation files (the "Software"), to deal
-		in the Software without restriction, including without limitation the rights
-		to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-		copies of the Software, and to permit persons to whom the Software is
-		furnished to do so, subject to the following conditions:
-
-		The above copyright notice and this permission notice shall be included in all
-		copies or substantial portions of the Software.
-
-		THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-		IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-		FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-		AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-		LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-		OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-		SOFTWARE.
-	*/
-	/* === From Here === */
 	@Inject(method = "moveAlongTrack", at = @At("HEAD"))
 	private void minecarttweaks$isMovingOnRail(BlockPos pos, BlockState state, CallbackInfo info) {
 		isMovingOnRail = true;
@@ -91,30 +71,9 @@ public abstract class AbstractMinecartMixin extends Entity implements Linkable, 
 		value = "INVOKE", target = "Lnet/minecraft/world/entity/vehicle/AbstractMinecart;applyNaturalSlowdown()V"
 	))
 	private void fixVelocityLoss(BlockPos previousPos, BlockState state, CallbackInfo info, @Local(ordinal = 1) Vec3 previousVelocity) {
-		if(blockPosition().equals(previousPos))
-			return;
-
-		boolean hasHitWall = false;
-		var velocity = getDeltaMovement();
-
-		var scale = getBlockSpeedFactor();
-		if(velocity.x == 0 && Math.abs(previousVelocity.x) > 0.5) {
-			velocity = velocity.with(Direction.Axis.X, previousVelocity.x * scale);
-			hasHitWall = true;
-		}
-
-		if(velocity.z == 0 && Math.abs(previousVelocity.z) > 0.5) {
-			velocity = velocity.with(Direction.Axis.Z, previousVelocity.z * scale);
-			hasHitWall = true;
-		}
-
-		if(!hasHitWall)
-			return;
-
 		BlockState blockState = level().getBlockState(blockPosition());
 
-		if(blockState.is(BlockTags.RAILS))
-			this.setDeltaMovement(velocity);
+		MinecartVelocityHelper.fixMinecartVelocityLoss((AbstractMinecart) (Object) this, previousPos, previousVelocity, blockState);
 	}
 
 	@ModifyExpressionValue(
@@ -143,14 +102,11 @@ public abstract class AbstractMinecartMixin extends Entity implements Linkable, 
 
 		original.call(x, y, z, yRot, xRot, steps);
 	}
-	/* === To Here === */
 
-	@Inject(method = "getMaxSpeed", at = @At("RETURN"), cancellable = true)
-	private void minecarttweaks$increaseSpeed(CallbackInfoReturnable<Double> info) {
-		if(getLinkedParent() != null)
-			info.setReturnValue(getLinkedParent().getMaxSpeed());
-		else
-			info.setReturnValue(MinecartTweaksConfig.getOtherMinecartSpeed());
+	@ModifyReturnValue(method = "getMaxSpeed", at = @At("RETURN"))
+	private double minecarttweaks$increaseSpeed(double original) {
+		var parent = getLinkedParent();
+		return parent != null ? parent.getMaxSpeed() : MinecartTweaksConfig.getOtherMinecartSpeed();
 	}
 
 	@Inject(method = "tick", at = @At("HEAD"))
@@ -162,52 +118,42 @@ public abstract class AbstractMinecartMixin extends Entity implements Linkable, 
 //
 //			setVelocity(avgVelocity);
 
-			int velocity = Mth.ceil(getDeltaMovement().horizontalDistance());
 			Direction direction = Direction.getNearest(getDeltaMovement().x(), 0, getDeltaMovement().z());
-			BlockPos minecartPos = blockPosition();
-			Vec3i pain = new Vec3i(minecartPos.getX(), 0, minecartPos.getZ());
-			var pos = new BlockPos.MutableBlockPos();
-			List<Vec3i> poses = new ArrayList<>();
+			BlockPos railPos = blockPosition();
 
-			poses.add(minecartPos);
+			var below = railPos.below();
+			if(level().getBlockState(railPos.below()).is(BlockTags.RAILS)) {
+				railPos = below;
+			}
 
-			for(Vec3i pose : poses) {
-				pos.set(pose);
-				int distance = pain.distManhattan(new Vec3i(pos.getX(), 0, pos.getZ()));
+			BlockState railState = level().getBlockState(railPos);
 
-				if(distance > velocity)
-					break;
-
-				if(level().getBlockState(pos.below()).is(BlockTags.RAILS))
-					pos.move(0, -1, 0);
-
-				BlockState state = level().getBlockState(pos);
-
-				if(state.is(BlockTags.RAILS) && state.getBlock() instanceof CrossedRailBlock rails) {
-					RailShape shape = state.getValue(rails.getShapeProperty());
-
-					if(getDeltaMovement().horizontalDistanceSqr() > 0) {
-						if(shape == RailShape.NORTH_SOUTH && direction.getAxis() == Direction.Axis.X) {
-							level().setBlockAndUpdate(pos, state.setValue(rails.getShapeProperty(), RailShape.EAST_WEST));
-							break;
-						}
-
-						if(shape == RailShape.EAST_WEST && direction.getAxis() == Direction.Axis.Z) {
-							level().setBlockAndUpdate(pos, state.setValue(rails.getShapeProperty(), RailShape.NORTH_SOUTH));
-							break;
-						}
+			// TODO move this to wherever it is read back, crossed rails should not need updating in-world
+			if(railState.is(BlockTags.RAILS) && railState.getBlock() instanceof CrossedRailBlock rails) {
+				if(getDeltaMovement().horizontalDistanceSqr() > 0) {
+					switch (direction.getAxis()) {
+						case X -> level().setBlockAndUpdate(railPos, railState.setValue(rails.getShapeProperty(), RailShape.EAST_WEST));
+						case Z -> level().setBlockAndUpdate(railPos, railState.setValue(rails.getShapeProperty(), RailShape.NORTH_SOUTH));
+						default -> {}
 					}
 				}
 			}
 
-			if(getLinkedParent() != null) {
-				double distance = getLinkedParent().distanceTo(this) - 1;
+			var parent = getLinkedParent();
+			handleParent:
+			if(parent != null) {
+				if(parent.isRemoved()) {
+					Linkable.unsetParentChild(getLinkedParent(), this);
+					break handleParent;
+				}
+
+				double distance = parent.distanceTo(this) - 1;
 
 				if(distance <= 4) {
-					var directionToParent = getLinkedParent().position().subtract(position()).normalize();
+					var directionToParent = parent.position().subtract(position()).normalize();
 
 					if(distance > 1) {
-						var parentVelocity = getLinkedParent().getDeltaMovement();
+						var parentVelocity = parent.getDeltaMovement();
 
 						if(parentVelocity.lengthSqr() == 0) {
 							setDeltaMovement(directionToParent.scale(0.05));
@@ -222,20 +168,23 @@ public abstract class AbstractMinecartMixin extends Entity implements Linkable, 
 						setDeltaMovement(Vec3.ZERO);
 					}
 				} else {
-					Linkable.unsetParentChild(getLinkedParent(), this);
+					Linkable.unsetParentChild(parent, this);
 					spawnAtLocation(Items.CHAIN);
-					return;
+					break handleParent;
 				}
-
-				if(getLinkedParent().isRemoved())
-					Linkable.unsetParentChild(getLinkedParent(), this);
 			}
 
-			if(getLinkedChild() != null && getLinkedChild().isRemoved())
-				Linkable.unsetParentChild(this, getLinkedChild());
+			var child = getLinkedChild();
+			handleChild:
+			if(child != null) {
+				if(child.isRemoved()) {
+					Linkable.unsetParentChild(this, child);
+					break handleChild;
+				}
+			}
 
 			for(Entity other : level().getEntities(this, getBoundingBox().inflate(0.1), this::canCollideWith)) {
-				if(other instanceof AbstractMinecart minecart && getLinkedParent() != null && !getLinkedParent().equals(minecart))
+				if(other instanceof AbstractMinecart minecart && minecart != parent)
 					minecart.setDeltaMovement(getDeltaMovement());
 
 				float damage = MinecartTweaksConfig.minecartDamage;

@@ -1,9 +1,10 @@
 classTweaker v2 named
 
 accessible field net/minecraft/world/entity/vehicle/AbstractMinecart EXITS Ljava/util/Map;
-accessible method net/minecraft/world/entity/vehicle/AbstractMinecart getMaxSpeed ()D
+accessible method net/minecraft/world/entity/vehicle/AbstractMinecart getBlockSpeedFactor ()F
 accessible method net/minecraft/world/entity/vehicle/AbstractMinecart exits (Lnet/minecraft/world/level/block/state/properties/RailShape;)Lcom/mojang/datafixers/util/Pair;
 accessible method net/minecraft/world/entity/vehicle/MinecartFurnace hasFuel ()Z
+accessible method net/minecraft/world/entity/vehicle/AbstractMinecart getMaxSpeed ()D
 
 inject-interface net/minecraft/world/item/MinecartItem dev/cammiescorner/cammiesminecarttweaks/util/ext/MinecartItemExt
 
