@@ -1,0 +1,175 @@
+name: Upload Release Artifacts
+
+on:
+  push:
+    tags: [ '*' ]
+
+env:
+  JAVA_VERSION: 25
+  TAG: ${{ github.ref_name }}
+  BUILD_NUMBER: ${{ github.run_number }}
+  MAVEN_UPLOAD_URL: ${{ secrets.MAVEN_UPLOAD_URL }}
+  MAVEN_UPLOAD_USERNAME: ${{ secrets.MAVEN_UPLOAD_USERNAME }}
+  MAVEN_UPLOAD_PASSWORD: ${{ secrets.MAVEN_UPLOAD_PASSWORD }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+    steps:
+      # Setup
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'microsoft'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6.2.0
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+      - name: Get current time
+        uses: srfrnk/current-time@5a4163ad035ccd9a407ec9e519c3b6ba1b633d1e
+        id: current-time
+        with:
+          format: YYYYMMDDHHmmss
+
+      # Build
+      - name: Build with Gradle
+        env:
+          BUILD_TIME: ${{ steps.current-time.outputs.formattedTime }}
+        run: ./gradlew assemble
+      - name: Maven Release
+        if: ${{ env.MAVEN_UPLOAD_URL }}
+        env:
+          BUILD_TIME: ${{ steps.current-time.outputs.formattedTime }}
+        run: ./gradlew publish
+
+      # Upload
+      # TODO multiloader
+      #      - name: Upload build artifacts (Common)
+      #        continue-on-error: true
+      #        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      #        with:
+      #          name: ${{ github.event.repository.name }}-Common-${{ env.TAG }}
+      #          path: |
+#            Common/build/libs/*.jar
+      - name: Upload build artifacts (Fabric)
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ github.event.repository.name }}-Fabric-${{ env.TAG }}
+          path: |
+            build/libs/*.jar
+      #            Fabric/build/libs/*.jar
+      #      - name: Upload build artifacts (NeoForge)
+      #        continue-on-error: true
+      #        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      #        with:
+      #          name: ${{ github.event.repository.name }}-NeoForge-${{ env.TAG }}
+      #          path: |
+      #            NeoForge/build/libs/*.jar
+
+      # Attest
+      - name: Generate build attestation
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+        with:
+          subject-path: |
+            **/build/libs/*.jar
+            !**/build/libs/*-sources.jar
+            !**/build/libs/*-javadoc.jar
+
+  publish_github:
+    name: Publish (GitHub Releases)
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      #      - name: Download build artifacts (Common)
+      #        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      #        with:
+      #          name: ${{ github.event.repository.name }}-Common-${{ env.TAG }}
+#          path: Common/build/libs
+      - name: Download build artifacts (Fabric)
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ github.event.repository.name }}-Fabric-${{ env.TAG }}
+          path: Fabric/build/libs
+      #      - name: Download build artifacts (NeoForge)
+      #        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      #        with:
+      #          name: ${{ github.event.repository.name }}-NeoForge-${{ env.TAG }}
+      #          path: NeoForge/build/libs
+      - name: Publish (GitHub Releases)
+        id: publish_github
+        uses: Kira-NT/mc-publish@52307b03863581dec6b652b83e597aec02ebb075 # v3.3.1
+        with:
+          github-token: ${{ github.token }}
+          files: |
+            **/build/libs/*.jar
+
+  publish_platforms:
+    name: Publish (${{ matrix.platform }}, ${{ matrix.loader }})
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ 'Curseforge', 'Modrinth' ]
+        # TODO neoforge disabled
+        #        loader: [ 'Fabric', 'NeoForge' ]
+        loader: [ 'Fabric' ]
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      modrinth_id: ${{ steps.store_ids.outputs.Fabric_modrinth_id }}
+      curseforge_id: ${{ steps.store_ids.outputs.Fabric_curseforge_id }}
+    steps:
+      - name: Download build artifacts (${{ matrix.loader }})
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ github.event.repository.name }}-${{ matrix.loader }}-${{ env.TAG }}
+          path: ${{ matrix.loader }}/build/libs
+      - name: Publish (Modrinth)
+        id: publish_modrinth
+        if: matrix.platform == 'Modrinth'
+        uses: Kira-NT/mc-publish@52307b03863581dec6b652b83e597aec02ebb075 # v3.3.1
+        with:
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          version: ${{ env.TAG }}+${{ matrix.loader }}
+          files: |
+            ${{ matrix.loader }}/build/libs/!(*-@(sources|javadoc|testmod)).jar
+            ${{ matrix.loader }}/build/libs/*-@(sources|javadoc).jar
+      - name: Publish (Curseforge)
+        id: publish_curseforge
+        if: matrix.platform == 'Curseforge'
+        uses: Kira-NT/mc-publish@52307b03863581dec6b652b83e597aec02ebb075 # v3.3.1
+        with:
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          version: ${{ env.TAG }}+${{ matrix.loader }}
+          files: |
+            ${{ matrix.loader }}/build/libs/!(*-@(sources|javadoc|testmod)).jar
+            ${{ matrix.loader }}/build/libs/*-@(sources|javadoc).jar
+      - name: Store Platform IDs
+        id: store_ids
+        run: |
+          echo "${{ matrix.loader }}_modrinth_id=${{ steps.publish_modrinth.outputs.modrinth-id }}" >> $GITHUB_OUTPUT
+          echo "${{ matrix.loader }}_curseforge_id=${{ steps.publish_curseforge.outputs.curseforge-id }}" >> $GITHUB_OUTPUT
+
+  notify:
+    name: Notify
+    needs: [ publish_github, publish_platforms ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        uses: Up-Mods/action-discord-release@main
+        with:
+          version: ${{ env.TAG }}
+          webhook-url: ${{ secrets.ANNOUNCEMENT_WEBHOOK_URL }}
+          curseforge-project-id: ${{ needs.publish_platforms.outputs.curseforge_id }}
+          modrinth-project-id: ${{ needs.publish_platforms.outputs.modrinth_id }}
+          thumbnail-url: https://mod-assets.upcraft.dev/promo/cammies-minecart-tweaks/icon_128x.png
+          ping-notification-role: false
