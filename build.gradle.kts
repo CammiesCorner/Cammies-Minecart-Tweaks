@@ -45,6 +45,7 @@ repositories {
 	}
 	maven("https://maven.teamresourceful.com/repository/maven-public")
     maven("https://maven.uuid.gg/releases")
+    maven("https://maven.ladysnake.org/releases")
 	maven("https://maven.blamejared.com")
 }
 
@@ -64,6 +65,8 @@ dependencies {
 
 	modImplementation(libs.fabric.loader)
     modImplementation(libs.fabric.api)
+
+    modImplementation(libs.bundles.cca.fabric)
 
     modImplementation(libs.commonnetwork.fabric)
 

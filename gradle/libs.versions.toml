@@ -21,6 +21,9 @@ autoservice = "1.1.1"
 jspecify = "1.0.1"
 jetbrains_annotations = "26.1.0"
 
+# Mods
+# https://ladysnake.org/wiki/cardinal-components-api/dev-install?version=1.21.1
+cca = "6.1.3"
 # https://modrinth.com/plugin/common-network/versions
 commonnetwork = "1.0.21-1.21.1"
 # https://modrinth.com/mod/modmenu/versions
@@ -46,6 +49,9 @@ autoservice_annotations = { module = "com.google.auto.service:auto-service-annot
 jspecify = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
 
 # Mods
+cca_base_fabric = { module = "org.ladysnake.cardinal-components-api:cardinal-components-base", version.ref = "cca" }
+cca_entity_fabric = { module = "org.ladysnake.cardinal-components-api:cardinal-components-entity", version.ref = "cca" }
+
 commonnetwork_fabric = { module = "mysticdrew:common-networking-fabric", version.ref = "commonnetwork" }
 
 modmenu_fabric = { module = "com.terraformersmc:modmenu", version.ref = "modmenu" }
@@ -53,6 +59,9 @@ modmenu_fabric = { module = "com.terraformersmc:modmenu", version.ref = "modmenu
 resourcefulconfig_fabric = { module = "com.teamresourceful.resourcefulconfig:resourcefulconfig-fabric-1.21", version.ref = "resourcefulconfig" }
 
 sparkweave_fabric = { module = "dev.upcraft.sparkweave:Sparkweave-Fabric", version.ref = "sparkweave" }
+
+[bundles]
+cca_fabric = ["cca_base_fabric", "cca_entity_fabric"]
 
 [plugins]
 fabric_loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric_loom" }

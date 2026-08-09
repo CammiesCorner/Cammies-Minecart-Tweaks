@@ -39,6 +39,8 @@
       "modrinth": "${modrinth_id}",
       "dependencies": [
         "fabric-api(required){curseforge:306612}{modrinth:P7dR8mSH}",
+        "cardinal-components-base(required){curseforge:318449}{modrinth:K01OU20C}",
+        "cardinal-components-entity(required)#(ignore)",
         "commonnetworking(required){curseforge:806044}{modrinth:HIuqnQpi}",
         "resourcefulconfig(required){curseforge:714059}{modrinth:M1953qlQ}",
         "sparkweave(required){curseforge:911456}{modrinth:nf68xfAw}",
@@ -60,6 +62,8 @@
     "minecraft": "=${minecraft_version}",
     "java": ">=${java_version}",
     "fabric-api": "*",
+    "cardinal-components-base": "*",
+    "cardinal-components-entity": "*",
     "commonnetworking": "*",
     "resourcefulconfig": "*",
     "sparkweave": "*"
