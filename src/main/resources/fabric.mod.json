@@ -33,7 +33,13 @@
   },
   "license": "${license_url}",
   "icon": "icon.png",
+  "entrypoints": {
+    "cardinal-components": ["dev.cammiescorner.cammiesminecarttweaks.init.MTComponents"]
+  },
   "custom": {
+    "cardinal-components": [
+      "${mod_id}:powered_minecart"
+    ],
     "mc-publish": {
       "curseforge": "${curseforge_id}",
       "modrinth": "${modrinth_id}",

@@ -23,6 +23,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MinecartItem;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.PoweredRailBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
@@ -260,5 +264,9 @@ public class MinecartHelper {
 		}
 
 		return true;
+	}
+
+	public static boolean shouldApplyBrakes(AbstractMinecart minecart, Level level, BlockPos pos, BlockState blockState) {
+		return blockState.is(Blocks.POWERED_RAIL) && !blockState.getValue(PoweredRailBlock.POWERED);
 	}
 }
