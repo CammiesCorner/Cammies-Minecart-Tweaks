@@ -6,7 +6,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.AbstractMinecartContainer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,12 +15,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AbstractMinecartContainerMixin {
 	@Inject(method = "interact", at = @At("HEAD"), cancellable = true)
 	public void minecarttweaks$heckUMojang(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> info) {
-		if(MinecartTweaksConfig.canLinkMinecarts) {
+		System.out.println("Interact, Client: " + player.level().isClientSide());
+		if(MinecartTweaksConfig.canLinkMinecarts && player.isShiftKeyDown()) {
 			ItemStack stack = player.getItemInHand(hand);
 
-			if(player.isShiftKeyDown() && stack.is(Items.CHAIN)) {
-				info.setReturnValue(InteractionResult.sidedSuccess(player.level().isClientSide()));
-			}
+//			if(MinecartHelper.tryLinkMinecart(player, )) {
+//				info.setReturnValue(InteractionResult.sidedSuccess(player.level().isClientSide()));
+//			}
 		}
 	}
 }

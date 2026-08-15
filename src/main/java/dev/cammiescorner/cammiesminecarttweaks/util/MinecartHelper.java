@@ -1,8 +1,10 @@
 package dev.cammiescorner.cammiesminecarttweaks.util;
 
 import com.google.common.collect.Maps;
-import dev.cammiescorner.cammiesminecarttweaks.api.InWorldMinecartCraftingEvent;
+import dev.cammiescorner.cammiesminecarttweaks.api.event.InWorldMinecartCraftingEvent;
 import dev.cammiescorner.cammiesminecarttweaks.api.Linkable;
+import dev.cammiescorner.cammiesminecarttweaks.data.MTTags;
+import dev.cammiescorner.cammiesminecarttweaks.datacomponent.ParentId;
 import dev.cammiescorner.cammiesminecarttweaks.init.MTDataComponents;
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
@@ -170,11 +172,12 @@ public class MinecartHelper {
 			var parent = originalMinecart.getLinkedParent();
 			var child = originalMinecart.getLinkedChild();
 
+			// TODO edge case: drop chains if result is not instance of Linkable
 			if(parent != null) {
-				Linkable.unsetParentChild(parent, originalMinecart);
+				Linkable.setParentChild(parent, resultEntity instanceof Linkable linkable ? linkable : null);
 			}
 			if(child != null) {
-				Linkable.unsetParentChild(originalMinecart, child);
+				Linkable.setParentChild(resultEntity instanceof Linkable linkable ? linkable : null, child);
 			}
 
 			originalMinecart.remove(Entity.RemovalReason.DISCARDED);
@@ -213,57 +216,53 @@ public class MinecartHelper {
 		return false;
 	}
 
-	public static boolean tryLinkMinecart(Player player, ServerLevel serverLevel, InteractionHand hand, AbstractMinecart minecart, ItemStack heldItem) {
-		if (!heldItem.is(Items.CHAIN)) {
-			return false;
-		}
+	public static boolean mayAttemptLinking(Player player, Level level, InteractionHand hand, Linkable target, ItemStack heldItem) {
+		return player.isShiftKeyDown() && heldItem.is(MTTags.Items.LINK_ITEMS);
+	}
 
-		UUID uuid = heldItem.get(MTDataComponents.PARENT_ID.get());
-		if(uuid != null) {
+	public static <T extends Entity & Linkable> void tryLinkMinecart(Player player, ServerLevel serverLevel, InteractionHand hand, T target, ItemStack heldItem) {
+		ParentId parentId = heldItem.get(MTDataComponents.PARENT_ID.get());
+		if(parentId != null) {
 			heldItem.remove(MTDataComponents.PARENT_ID.get());
 
-			if (!minecart.getUUID().equals(uuid) && serverLevel.getEntity(uuid) instanceof Linkable parent) {
+			if (!parentId.value().equals(target.getUUID()) && serverLevel.getEntity(parentId.value()) instanceof Linkable parent) {
 				if (parent.getLinkedChild() != null) {
 					// TODO better error message: parent cart already has a linked child
-					player.displayClientMessage(Component.translatable("minecarttweaks.cant_link_to_engine").withStyle(ChatFormatting.RED), true);
-					minecart.playSound(SoundEvents.CHAIN_BREAK);
+					player.displayClientMessage(Component.literal("parent cart already has a linked child").withStyle(ChatFormatting.RED), true);
+					target.playSound(SoundEvents.CHAIN_BREAK);
 					player.setItemInHand(hand, heldItem);
-					return true;
+					return;
 				}
 
 				// check for circles; we need only check the parents since the source cart already cannot have a child
 				Set<Linkable> train = new HashSet<>();
-				train.add(minecart);
-				train.add(parent);
+				train.add(target);
 
-				Linkable tmp;
-				while ((tmp = parent.getLinkedParent()) != null) {
+				var tmp = parent;
+				while (tmp != null) {
 					if (!train.add(tmp)) {
+						System.out.printf("Parent: %s, Target: %s, Train: %s%n", parentId.value(), target.getUUID(), train);
 						// TODO better error message: cart already in train
-						player.displayClientMessage(Component.translatable("minecarttweaks.cant_link_to_engine").withStyle(ChatFormatting.RED), true);
-						minecart.playSound(SoundEvents.CHAIN_BREAK);
+						player.displayClientMessage(Component.literal("cart already in train").withStyle(ChatFormatting.RED), true);
+						target.playSound(SoundEvents.CHAIN_BREAK);
 						player.setItemInHand(hand, heldItem);
-						return true;
+						return;
 					}
+
+					tmp = tmp.getLinkedParent();
 				}
 
-				Linkable oldParent = minecart.getLinkedParent();
-				if (oldParent != null) {
-					Linkable.unsetParentChild(oldParent, minecart);
-				}
+				Linkable.setParentChild(parent, target);
 
-				Linkable.setParentChild(parent, minecart);
-
-				if (!player.isCreative()) {
-					heldItem.shrink(1);
-				}
-				minecart.playSound(SoundEvents.CHAIN_PLACE);
+				heldItem.consume(1, player);
+				target.playSound(SoundEvents.CHAIN_PLACE);
 			} else {
-				minecart.playSound(SoundEvents.CHAIN_BREAK);
+				target.playSound(SoundEvents.CHAIN_BREAK);
 			}
+		} else {
+			heldItem.set(MTDataComponents.PARENT_ID.get(), new ParentId(target.getUUID()));
+			player.playNotifySound(SoundEvents.CHAIN_PLACE, player.getSoundSource(), 1.0F, 1.0F);
 		}
-
-		return true;
 	}
 
 	public static boolean shouldApplyBrakes(AbstractMinecart minecart, Level level, BlockPos pos, BlockState blockState) {

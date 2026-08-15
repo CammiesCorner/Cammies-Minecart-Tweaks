@@ -9,7 +9,6 @@
   "mixins": [
     "AbstractMinecartMixin",
     "BaseRailBlockMixin",
-    "ServerEntityMixin",
     "MinecartFurnaceMixin",
     "MinecartItemMixin",
     "AbstractMinecartContainerMixin"

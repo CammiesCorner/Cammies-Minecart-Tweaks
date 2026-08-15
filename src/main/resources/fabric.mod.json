@@ -38,6 +38,7 @@
   },
   "custom": {
     "cardinal-components": [
+      "${mod_id}:linkable",
       "${mod_id}:powered_minecart"
     ],
     "mc-publish": {

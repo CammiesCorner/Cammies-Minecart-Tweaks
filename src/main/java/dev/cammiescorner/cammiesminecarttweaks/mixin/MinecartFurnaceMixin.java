@@ -191,7 +191,6 @@ public abstract class MinecartFurnaceMixin extends AbstractMinecart {
 		comp.setParking(MinecartHelper.shouldApplyBrakes(this, level(), pos, blockState));
 
 		if(wasParked != comp.isParking()) {
-			LOGGER.info("OLD: {}, NEW: {}", wasParked, comp.isParking());
 			if(comp.isParking()) {
 				comp.storeImpulse(xPush, zPush);
 				xPush = 0.0D;
@@ -205,8 +204,6 @@ public abstract class MinecartFurnaceMixin extends AbstractMinecart {
 				zPush = 0.0D;
 				comp.storeImpulse(0.0D, 0.0D);
 			}
-			LOGGER.info(" x: {},  z: {}", xPush, zPush);
-			LOGGER.info("sx: {}, sz: {}", comp.getStoredImpulseX(), comp.getStoredImpulseZ());
 
 			this.hasImpulse = true;
 			comp.sync();

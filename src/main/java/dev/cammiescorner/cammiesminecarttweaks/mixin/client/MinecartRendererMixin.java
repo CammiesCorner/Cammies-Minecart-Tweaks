@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.entity.MinecartRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,8 +32,7 @@ public abstract class MinecartRendererMixin<T extends AbstractMinecart> extends 
 
 	@Inject(method = "render(Lnet/minecraft/world/entity/vehicle/AbstractMinecart;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At("RETURN"))
 	public void minecarttweaks$render(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
-		var parent = entity.getLinkedParent();
-		if(parent != null) {
+		if(entity.getLinkedParent() instanceof Entity parent) {
 			double startX = parent.getX();
 			double startY = parent.getY();
 			double startZ = parent.getZ();

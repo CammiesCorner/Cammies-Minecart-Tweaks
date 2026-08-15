@@ -1,47 +1,43 @@
 package dev.cammiescorner.cammiesminecarttweaks.api;
 
+import dev.cammiescorner.cammiesminecarttweaks.cca.component.LinkableData;
+import dev.cammiescorner.cammiesminecarttweaks.init.MTComponents;
 import net.minecraft.world.entity.vehicle.AbstractMinecart;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Interface injected onto {@link AbstractMinecart} to facilitate linking carts together.
  */
 public interface Linkable {
-	default @Nullable AbstractMinecart getLinkedParent() {
-		return null;
-	}
-	default void setLinkedParent(@Nullable AbstractMinecart parent) {}
 
-	default @Nullable AbstractMinecart getLinkedChild() {
-		return null;
-	}
-	default void setLinkedChild(@Nullable AbstractMinecart child) {}
+	@Nullable Linkable getLinkedParent();
+	void setLinkedParent(@Nullable Linkable parent);
 
-	default void setLinkedParentClient(int id) {}
-	default void setLinkedChildClient(int id) {}
+	@Nullable Linkable getLinkedChild();
+	void setLinkedChild(@Nullable Linkable child);
 
-	/**
-	 * @deprecated use {@link #asAbstractMinecart()}
-	 */
-	@Deprecated(forRemoval = true)
-	default AbstractMinecart asAbstractMinecartEntity() { return asAbstractMinecart(); }
+	static void setParentChild(@Nullable Linkable parent, @Nullable Linkable child) {
+		if(child != null) {
+			var prevParent = child.getLinkedParent();
+			if(prevParent != null) {
+				prevParent.setLinkedChild(null);
+				MTComponents.LINKABLE.maybeGet(prevParent).ifPresent(LinkableData::sync);
+			}
 
-	default AbstractMinecart asAbstractMinecart() { return (AbstractMinecart) this; }
-
-	static void setParentChild(@NotNull Linkable parent, @NotNull Linkable child) {
-		unsetParentChild(parent, parent.getLinkedChild());
-		unsetParentChild(child, child.getLinkedParent());
-		parent.setLinkedChild(child.asAbstractMinecart());
-		child.setLinkedParent(parent.asAbstractMinecart());
-	}
-
-	static void unsetParentChild(@Nullable Linkable parent, @Nullable Linkable child) {
-		if (parent != null) {
-			parent.setLinkedChild(null);
+			child.setLinkedParent(parent);
 		}
-		if (child != null) {
-			child.setLinkedParent(null);
+
+		if(parent != null) {
+			var prevChild = parent.getLinkedChild();
+			if(prevChild != null) {
+				prevChild.setLinkedParent(null);
+				MTComponents.LINKABLE.maybeGet(prevChild).ifPresent(LinkableData::sync);
+			}
+
+			parent.setLinkedChild(child);
 		}
+
+		MTComponents.LINKABLE.maybeGet(parent).ifPresent(LinkableData::sync);
+		MTComponents.LINKABLE.maybeGet(child).ifPresent(LinkableData::sync);
 	}
 }

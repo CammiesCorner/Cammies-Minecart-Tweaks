@@ -1,4 +1,4 @@
-package dev.cammiescorner.cammiesminecarttweaks.api;
+package dev.cammiescorner.cammiesminecarttweaks.api.event;
 
 import dev.upcraft.sparkweave.api.event.Event;
 import net.minecraft.server.level.ServerLevel;
